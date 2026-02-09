@@ -1,0 +1,83 @@
+{
+  "armor.light_walk": {
+    "category": "player",
+    "sounds": [
+      "anextratouch:armor/light_1",
+      "anextratouch:armor/light_2",
+      "anextratouch:armor/light_3"
+    ]
+  },
+  "armor.medium_walk": {
+    "category": "player",
+    "sounds": [
+      "anextratouch:armor/medium_walk1",
+      "anextratouch:armor/medium_walk2",
+      "anextratouch:armor/medium_walk3"
+    ]
+  },
+  "armor.heavy_walk": {
+    "category": "player",
+    "sounds": [
+      "anextratouch:armor/heavy_walk1",
+      "anextratouch:armor/heavy_walk2",
+      "anextratouch:armor/heavy_walk3",
+      "anextratouch:armor/heavy_walk4",
+      "anextratouch:armor/heavy_walk5",
+      "anextratouch:armor/heavy_walk6"
+    ]
+  },
+  "armor.heavy_run": {
+    "category": "player",
+    "sounds": [
+      "anextratouch:armor/heavy_run1",
+      "anextratouch:armor/heavy_run2",
+      "anextratouch:armor/heavy_run3",
+      "anextratouch:armor/heavy_run4",
+      "anextratouch:armor/heavy_run5",
+      "anextratouch:armor/heavy_run6",
+      "anextratouch:armor/heavy_run7",
+      "anextratouch:armor/heavy_run8",
+      "anextratouch:armor/heavy_run9"
+    ]
+  },
+  "armor.heavy_foot": {
+    "category": "player",
+    "sounds": [
+      "anextratouch:armor/heavy_foot1",
+      "anextratouch:armor/heavy_foot2",
+      "anextratouch:armor/heavy_foot3",
+      "anextratouch:armor/heavy_foot4"
+    ]
+  },
+  "armor.crystal_walk": {
+    "category": "player",
+    "sounds": [
+      "anextratouch:armor/crystal_walk1",
+      "anextratouch:armor/crystal_walk2",
+      "anextratouch:armor/crystal_walk3",
+      "anextratouch:armor/crystal_walk4",
+      "anextratouch:armor/crystal_walk5",
+      "anextratouch:armor/crystal_walk6"
+    ]
+  },
+  "armor.crystal_run": {
+    "category": "player",
+    "sounds": [
+      "anextratouch:armor/crystal_run1",
+      "anextratouch:armor/crystal_run2",
+      "anextratouch:armor/crystal_run3",
+      "anextratouch:armor/crystal_run4",
+      "anextratouch:armor/crystal_run5",
+      "anextratouch:armor/crystal_run6"
+    ]
+  },
+  "armor.crystal_foot": {
+    "category": "player",
+    "sounds": [
+      "anextratouch:armor/crystal_foot1",
+      "anextratouch:armor/crystal_foot2",
+      "anextratouch:armor/crystal_foot3",
+      "anextratouch:armor/crystal_foot4"
+    ]
+  }
+}
