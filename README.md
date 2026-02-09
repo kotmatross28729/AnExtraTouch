@@ -5,11 +5,12 @@
 Various small visual, audio, and gameplay tweaks, aimed to enhance the game experience. For Minecraft 1.7.10.
 
 [![hub](images/badges/github.png)](https://github.com/JackOfNoneTrades/AnExtraTouch/releases)
+[![maven](images/badges/maven.png)](https://maven.fentanylsolutions.org/#/releases/org/fentanylsolutions/anextratouch)
 ![forge](images/badges/forge.png)
+
 <!--
 [![modrinth](images/badges/modrinth.png)](https://modrinth.com/mod/waystones-x)
 [![curse](images/badges/curse.png)](https://www.curseforge.com/minecraft/mc-mods/waystones-x)
-[![maven](images/badges/maven.png)](https://maven.fentanylsolutions.org/#/releases/net/blay09/mods/waystones)
 -->
 
 ![footsteps](images/gifs/footsteps.gif)
