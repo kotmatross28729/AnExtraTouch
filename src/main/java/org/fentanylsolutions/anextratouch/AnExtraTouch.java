@@ -72,4 +72,7 @@ public class AnExtraTouch {
     // MAYBEDO
     // Make blazes melt shit below
     // Make blizzes freeze shit below
+
+    // Spawn skeleton with chainmail armor
+    // /summon Skeleton ~ ~ ~ {Equipment:[{},{},{},{id:303},{id:302}]}
 }
