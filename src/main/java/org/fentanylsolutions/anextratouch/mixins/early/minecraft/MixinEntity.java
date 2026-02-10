@@ -5,7 +5,8 @@ import net.minecraft.entity.EntityLivingBase;
 
 import org.fentanylsolutions.anextratouch.AnExtraTouch;
 import org.fentanylsolutions.anextratouch.footsteps.FootprintUtil;
-import org.fentanylsolutions.anextratouch.handlers.client.effects.PlayerEffectHandler;
+import org.fentanylsolutions.anextratouch.handlers.client.ArmorSoundHandler;
+import org.fentanylsolutions.anextratouch.handlers.server.ServerArmorHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -36,14 +37,23 @@ public class MixinEntity {
             value = "INVOKE",
             target = "Lnet/minecraft/entity/Entity;func_145780_a(IIILnet/minecraft/block/Block;)V"))
     private void onPlayStepSound(double dx, double dy, double dz, CallbackInfo ci) {
-        PlayerEffectHandler.onEntityStep((Entity) (Object) this);
+        Entity self = (Entity) (Object) this;
+        if (self.worldObj.isRemote) {
+            ArmorSoundHandler.onEntityStep(self);
+        } else {
+            ServerArmorHandler.onEntityStep(self);
+        }
     }
 
-    // Hook into call site of fall() inside moveEntity
-    @Inject(method = "moveEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;fall(F)V"))
-    private void onFall(double dx, double dy, double dz, CallbackInfo ci) {
+    // Hook into call site of fall() inside updateFallState (fall() is not called directly in moveEntity)
+    @Inject(method = "updateFallState", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;fall(F)V"))
+    private void onFall(double distanceFallenThisTick, boolean isOnGround, CallbackInfo ci) {
         Entity self = (Entity) (Object) this;
-        PlayerEffectHandler.onEntityLand(self, self.fallDistance);
+        if (self.worldObj.isRemote) {
+            ArmorSoundHandler.onEntityLand(self, self.fallDistance);
+        } else {
+            ServerArmorHandler.onEntityLand(self, self.fallDistance);
+        }
     }
 
     // tracking actual position changes.

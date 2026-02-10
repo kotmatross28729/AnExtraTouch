@@ -24,7 +24,7 @@ Various small visual, audio, and gameplay tweaks, aimed to enhance the game expe
 
 The entire mod is heavily configurable.
 
-This mod can be installed on client, server, or both.
+This mod can be installed on client, server, or both. Armor walking sounds are more precise when the mod is installed on the server.
 
 ## Dependencies
 * [UniMixins](https://modrinth.com/mod/unimixins) [![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/unimixins)  [![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/unimixins/versions) [![git](images/icons/git.png)](https://github.com/LegacyModdingMC/UniMixins/releases)

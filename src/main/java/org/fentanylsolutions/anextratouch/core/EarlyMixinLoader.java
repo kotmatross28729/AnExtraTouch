@@ -57,7 +57,7 @@ public class EarlyMixinLoader extends FentEarlyMixinLoader {
             // Accessors
 
             // Rest
-            .addMixin("MixinEntity", Side.CLIENT)
+            .addMixin("MixinEntity", Side.BOTH)
             .build();
     }
 }
