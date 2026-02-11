@@ -19,6 +19,7 @@ Various small visual, audio, and gameplay tweaks, aimed to enhance the game expe
 * Entity footprints. Backported from modern Dynamic Surroundings.
 * Armor walk and equip sounds. Backported from modern Dynamic Surroundings.
 * Cold breath particles. Backported from modern Dynamic Surroundings.
+* Water splash sound effects when walking in rain. Backported from modern Dynamic Surroundings.
 * Wet entities shed water particles. Backported from Legendary Survival Overhaul.
 * Grass trampling. Entities can trample grass when repeatedly walking over it. Entirely serve-side, off by default, players only by default.
 
