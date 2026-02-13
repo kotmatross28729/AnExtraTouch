@@ -31,6 +31,8 @@ public final class CameraHandler {
     private static long lastNanoTime;
     private static double accumulatedTime;
     private static double deltaTime;
+    private static boolean initialized;
+    private static int lastEntityId = Integer.MIN_VALUE;
 
     // Previous frame state
     private static final Vector3d prevCameraEulerRot = new Vector3d();
@@ -110,6 +112,29 @@ public final class CameraHandler {
         double motionX = velocitySource.motionX;
         double motionY = velocitySource.motionY;
         double motionZ = velocitySource.motionZ;
+
+        // initialize/reset state when camera entity changes (world load/respawn)
+        // to avoid a fake turning roll impulse on first frame.
+        int entityId = entity.getEntityId();
+        if (!initialized || entityId != lastEntityId) {
+            initialized = true;
+            lastEntityId = entityId;
+
+            prevCameraEulerRot.set(currentPitch, currentYaw, 0.0);
+            prevEntityVelocity.set(motionX, motionY, motionZ);
+            turningRollTargetOffset = 0.0;
+            prevVerticalPitchOffset = 0.0;
+            prevForwardPitchOffset = 0.0;
+            prevStrafingRollOffset = 0.0;
+            cameraSwayFactor = 0.0;
+            cameraSwayFactorTarget = 0.0;
+            lastActionTime = accumulatedTime;
+            prevThirdPersonView = net.minecraft.client.Minecraft.getMinecraft().gameSettings.thirdPersonView;
+            pitchOffset = 0.0f;
+            yawOffset = 0.0f;
+            rollOffset = 0.0f;
+            return;
+        }
 
         // player action (movement or look change)
         if (motionX != prevEntityVelocity.x || motionY != prevEntityVelocity.y
