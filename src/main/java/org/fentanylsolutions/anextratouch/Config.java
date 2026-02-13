@@ -128,6 +128,12 @@ public class Config {
     public static float cameraExplosionTrauma = 1.0f;
     public static float cameraThunderTrauma = 0.05f;
     public static float cameraHandSwingTrauma = 0.03f;
+    public static boolean cameraFallShakeEnabled = true;
+    public static float cameraFallShakeMinDistance = 4.0f;
+    public static float cameraFallShakeMaxDistance = 20.0f;
+    public static float cameraFallShakeMaxTrauma = 0.45f;
+    public static float cameraFallShakeFrequency = 0.8f;
+    public static float cameraFallShakeLength = 0.55f;
     // walking context
     public static float cameraWalkStrafingRoll = 10.0f;
     public static float cameraWalkForwardPitch = 7.0f;
@@ -663,6 +669,46 @@ public class Config {
                 0.0f,
                 1.0f,
                 "Trauma intensity for hand swing screen shakes.");
+            cameraFallShakeEnabled = config.getBoolean(
+                "cameraFallShakeEnabled",
+                Categories.camera,
+                cameraFallShakeEnabled,
+                "Add a landing screen shake when falling from sufficient height.");
+            cameraFallShakeMinDistance = config.getFloat(
+                "cameraFallShakeMinDistance",
+                Categories.camera,
+                cameraFallShakeMinDistance,
+                0.0f,
+                64.0f,
+                "Minimum fall distance before landing shake starts.");
+            cameraFallShakeMaxDistance = config.getFloat(
+                "cameraFallShakeMaxDistance",
+                Categories.camera,
+                cameraFallShakeMaxDistance,
+                0.1f,
+                128.0f,
+                "Fall distance at which landing shake reaches maximum trauma.");
+            cameraFallShakeMaxTrauma = config.getFloat(
+                "cameraFallShakeMaxTrauma",
+                Categories.camera,
+                cameraFallShakeMaxTrauma,
+                0.0f,
+                2.0f,
+                "Maximum trauma applied by landing shake.");
+            cameraFallShakeFrequency = config.getFloat(
+                "cameraFallShakeFrequency",
+                Categories.camera,
+                cameraFallShakeFrequency,
+                0.1f,
+                4.0f,
+                "Noise frequency multiplier for landing shake.");
+            cameraFallShakeLength = config.getFloat(
+                "cameraFallShakeLength",
+                Categories.camera,
+                cameraFallShakeLength,
+                0.05f,
+                3.0f,
+                "Duration in seconds of landing shake.");
             cameraWalkStrafingRoll = config.getFloat(
                 "cameraWalkStrafingRoll",
                 Categories.camera,
