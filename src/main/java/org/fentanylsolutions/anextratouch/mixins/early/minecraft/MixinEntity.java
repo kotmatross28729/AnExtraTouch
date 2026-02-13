@@ -1,15 +1,11 @@
 package org.fentanylsolutions.anextratouch.mixins.early.minecraft;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 
 import org.fentanylsolutions.anextratouch.AnExtraTouch;
-import org.fentanylsolutions.anextratouch.Config;
 import org.fentanylsolutions.anextratouch.footsteps.FootprintUtil;
 import org.fentanylsolutions.anextratouch.handlers.client.StepSoundHandler;
-import org.fentanylsolutions.anextratouch.handlers.client.camera.CameraHandler;
-import org.fentanylsolutions.anextratouch.handlers.client.camera.ScreenShakeManager;
 import org.fentanylsolutions.anextratouch.handlers.server.ServerArmorHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -32,8 +28,6 @@ public class MixinEntity {
 
     @Unique
     private boolean anextratouch$isRightFoot = true;
-    @Unique
-    private long anextratouch$cameraFallShakeHandle;
 
     // Hook into call site of func_145780_a (step sound method) inside moveEntity, because we'd be missing overrides
     // that are noops
@@ -57,35 +51,6 @@ public class MixinEntity {
         Entity self = (Entity) (Object) this;
         if (self.worldObj.isRemote) {
             StepSoundHandler.onEntityLand(self, self.fallDistance);
-
-            if (!Config.cameraOverhaulEnabled || !Config.cameraFallShakeEnabled) {
-                return;
-            }
-            Minecraft mc = Minecraft.getMinecraft();
-            if (self != mc.thePlayer) {
-                return;
-            }
-            if (Config.cameraDisableWhilePaused && mc.isGamePaused()) {
-                return;
-            }
-
-            float distance = self.fallDistance;
-            if (distance < Config.cameraFallShakeMinDistance) {
-                return;
-            }
-
-            float denom = Math.max(0.0001f, Config.cameraFallShakeMaxDistance - Config.cameraFallShakeMinDistance);
-            float t = (distance - Config.cameraFallShakeMinDistance) / denom;
-            if (t < 0f) t = 0f;
-            if (t > 1f) t = 1f;
-
-            anextratouch$cameraFallShakeHandle = ScreenShakeManager.recreate(anextratouch$cameraFallShakeHandle);
-            ScreenShakeManager.Slot shake = ScreenShakeManager.get(anextratouch$cameraFallShakeHandle);
-            shake.trauma = Config.cameraFallShakeMaxTrauma * (t * t);
-            shake.frequency = Config.cameraFallShakeFrequency;
-            shake.lengthInSeconds = Config.cameraFallShakeLength;
-
-            CameraHandler.notifyOfPlayerAction();
         } else {
             ServerArmorHandler.onEntityLand(self, self.fallDistance);
         }
