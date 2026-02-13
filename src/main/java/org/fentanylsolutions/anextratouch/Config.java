@@ -20,6 +20,7 @@ public class Config {
         public static final String rainSplash = "rain_splash";
         public static final String misc = "misc";
         public static final String smoothGui = "smooth_gui";
+        public static final String camera = "camera";
     }
 
     // general
@@ -105,6 +106,38 @@ public class Config {
     public static String smoothGuiAnimationDirection = "DOWN";
     public static String[] smoothGuiExcludedScreens = { "GuiChat", "GuiDownloadTerrain", "GuiMemoryErrorScreen",
         "GuiGameOver", "GuiMainMenu" };
+
+    // camera
+    public static boolean cameraOverhaulEnabled = true;
+    public static boolean cameraOverhaulThirdPerson = true;
+    // turning roll
+    public static float cameraTurningRollAccumulation = 1.0f;
+    public static float cameraTurningRollIntensity = 1.25f;
+    public static float cameraTurningRollSmoothing = 1.0f;
+    // camera sway
+    public static float cameraSwayIntensity = 0.6f;
+    public static float cameraSwayFrequency = 0.16f;
+    public static float cameraSwayFadeInDelay = 0.15f;
+    public static float cameraSwayFadeInLength = 5.0f;
+    public static float cameraSwayFadeOutLength = 0.75f;
+    // screen shakes
+    public static float cameraShakeMaxIntensity = 2.5f;
+    public static float cameraShakeMaxFrequency = 6.0f;
+    public static float cameraExplosionTrauma = 1.0f;
+    public static float cameraThunderTrauma = 0.05f;
+    public static float cameraHandSwingTrauma = 0.03f;
+    // walking context
+    public static float cameraWalkStrafingRoll = 10.0f;
+    public static float cameraWalkForwardPitch = 7.0f;
+    public static float cameraWalkVerticalPitch = 2.5f;
+    public static float cameraWalkHorizSmoothing = 1.0f;
+    public static float cameraWalkVertSmoothing = 1.0f;
+    // riding context
+    public static float cameraRideStrafingRoll = 5.0f;
+    public static float cameraRideForwardPitch = 3.5f;
+    public static float cameraRideVerticalPitch = 5.0f;
+    public static float cameraRideHorizSmoothing = 1.0f;
+    public static float cameraRideVertSmoothing = 1.0f;
 
     // misc
     public static boolean blizzSnowTrailEnabled = true;
@@ -515,6 +548,179 @@ public class Config {
                 Categories.smoothGui,
                 smoothGuiExcludedScreens,
                 "GUI screen classes that should not be animated. Can be simple names (e.g. \"GuiChat\") or fully qualified (e.g. \"net.minecraft.client.gui.GuiChat\").");
+
+            // camera
+            cameraOverhaulEnabled = config.getBoolean(
+                "cameraOverhaulEnabled",
+                Categories.camera,
+                cameraOverhaulEnabled,
+                "Enable dynamic camera effects (velocity pitch, strafing roll, turning roll, idle sway).");
+            cameraOverhaulThirdPerson = config.getBoolean(
+                "cameraOverhaulThirdPerson",
+                Categories.camera,
+                cameraOverhaulThirdPerson,
+                "Apply camera effects in third person view.");
+            cameraTurningRollAccumulation = config.getFloat(
+                "cameraTurningRollAccumulation",
+                Categories.camera,
+                cameraTurningRollAccumulation,
+                0.0f,
+                5.0f,
+                "How quickly turning roll accumulates when rotating the camera.");
+            cameraTurningRollIntensity = config.getFloat(
+                "cameraTurningRollIntensity",
+                Categories.camera,
+                cameraTurningRollIntensity,
+                0.0f,
+                10.0f,
+                "Maximum intensity of the turning roll effect.");
+            cameraTurningRollSmoothing = config.getFloat(
+                "cameraTurningRollSmoothing",
+                Categories.camera,
+                cameraTurningRollSmoothing,
+                0.0f,
+                5.0f,
+                "Smoothing factor for turning roll decay. Higher = slower decay.");
+            cameraSwayIntensity = config.getFloat(
+                "cameraSwayIntensity",
+                Categories.camera,
+                cameraSwayIntensity,
+                0.0f,
+                5.0f,
+                "Intensity of idle camera sway.");
+            cameraSwayFrequency = config.getFloat(
+                "cameraSwayFrequency",
+                Categories.camera,
+                cameraSwayFrequency,
+                0.01f,
+                2.0f,
+                "Frequency of idle camera sway oscillation.");
+            cameraSwayFadeInDelay = config.getFloat(
+                "cameraSwayFadeInDelay",
+                Categories.camera,
+                cameraSwayFadeInDelay,
+                0.0f,
+                10.0f,
+                "Seconds of inactivity before camera sway begins fading in.");
+            cameraSwayFadeInLength = config.getFloat(
+                "cameraSwayFadeInLength",
+                Categories.camera,
+                cameraSwayFadeInLength,
+                0.0f,
+                30.0f,
+                "Duration in seconds for camera sway to fully fade in.");
+            cameraSwayFadeOutLength = config.getFloat(
+                "cameraSwayFadeOutLength",
+                Categories.camera,
+                cameraSwayFadeOutLength,
+                0.0f,
+                5.0f,
+                "Duration in seconds for camera sway to fade out when the player moves.");
+            cameraShakeMaxIntensity = config.getFloat(
+                "cameraShakeMaxIntensity",
+                Categories.camera,
+                cameraShakeMaxIntensity,
+                0.0f,
+                20.0f,
+                "Maximum combined intensity of all active screen shakes.");
+            cameraShakeMaxFrequency = config.getFloat(
+                "cameraShakeMaxFrequency",
+                Categories.camera,
+                cameraShakeMaxFrequency,
+                0.1f,
+                20.0f,
+                "Maximum frequency of screen shake noise sampling.");
+            cameraExplosionTrauma = config.getFloat(
+                "cameraExplosionTrauma",
+                Categories.camera,
+                cameraExplosionTrauma,
+                0.0f,
+                5.0f,
+                "Trauma intensity for explosion screen shakes.");
+            cameraThunderTrauma = config.getFloat(
+                "cameraThunderTrauma",
+                Categories.camera,
+                cameraThunderTrauma,
+                0.0f,
+                5.0f,
+                "Trauma intensity for lightning/thunder screen shakes.");
+            cameraHandSwingTrauma = config.getFloat(
+                "cameraHandSwingTrauma",
+                Categories.camera,
+                cameraHandSwingTrauma,
+                0.0f,
+                1.0f,
+                "Trauma intensity for hand swing screen shakes.");
+            cameraWalkStrafingRoll = config.getFloat(
+                "cameraWalkStrafingRoll",
+                Categories.camera,
+                cameraWalkStrafingRoll,
+                0.0f,
+                50.0f,
+                "Strafing roll factor when walking.");
+            cameraWalkForwardPitch = config.getFloat(
+                "cameraWalkForwardPitch",
+                Categories.camera,
+                cameraWalkForwardPitch,
+                0.0f,
+                50.0f,
+                "Forward velocity pitch factor when walking.");
+            cameraWalkVerticalPitch = config.getFloat(
+                "cameraWalkVerticalPitch",
+                Categories.camera,
+                cameraWalkVerticalPitch,
+                0.0f,
+                50.0f,
+                "Vertical velocity pitch factor when walking.");
+            cameraWalkHorizSmoothing = config.getFloat(
+                "cameraWalkHorizSmoothing",
+                Categories.camera,
+                cameraWalkHorizSmoothing,
+                0.0f,
+                10.0f,
+                "Horizontal velocity smoothing factor when walking.");
+            cameraWalkVertSmoothing = config.getFloat(
+                "cameraWalkVertSmoothing",
+                Categories.camera,
+                cameraWalkVertSmoothing,
+                0.0f,
+                10.0f,
+                "Vertical velocity smoothing factor when walking.");
+            cameraRideStrafingRoll = config.getFloat(
+                "cameraRideStrafingRoll",
+                Categories.camera,
+                cameraRideStrafingRoll,
+                0.0f,
+                50.0f,
+                "Strafing roll factor when riding.");
+            cameraRideForwardPitch = config.getFloat(
+                "cameraRideForwardPitch",
+                Categories.camera,
+                cameraRideForwardPitch,
+                0.0f,
+                50.0f,
+                "Forward velocity pitch factor when riding.");
+            cameraRideVerticalPitch = config.getFloat(
+                "cameraRideVerticalPitch",
+                Categories.camera,
+                cameraRideVerticalPitch,
+                0.0f,
+                50.0f,
+                "Vertical velocity pitch factor when riding.");
+            cameraRideHorizSmoothing = config.getFloat(
+                "cameraRideHorizSmoothing",
+                Categories.camera,
+                cameraRideHorizSmoothing,
+                0.0f,
+                10.0f,
+                "Horizontal velocity smoothing factor when riding.");
+            cameraRideVertSmoothing = config.getFloat(
+                "cameraRideVertSmoothing",
+                Categories.camera,
+                cameraRideVertSmoothing,
+                0.0f,
+                10.0f,
+                "Vertical velocity smoothing factor when riding.");
 
             // misc
             blizzSnowTrailEnabled = config.getBoolean(

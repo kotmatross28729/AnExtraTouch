@@ -24,6 +24,7 @@ Various small visual, audio, and gameplay tweaks, aimed to enhance the game expe
 * Grass trampling. Entities can trample grass when repeatedly walking over it. Entirely serve-side, off by default, players only by default.
 * Thermal Foundation Blizz snow trail, similar to the Snow Golem.
 * Smooth Gui backport.
+* Minecraft-CameraOverhaul backport.
 
 The entire mod is heavily configurable.
 
@@ -45,6 +46,7 @@ This mod can be installed on client, server, or both. Armor walking sounds are m
 * [Dynamic Surroundings](https://github.com/OreCruncher/DynamicSurroundingsFabric). Armor sound assets and footprint texture come from this mod.
 * [LegendarySurvivalOverhaul](https://github.com/Alex-Hashtag/LegendarySurvivalOverhaul).
 * [Smooth Gui](https://github.com/Ezzenix/SmoothGui)
+* [Minecraft-CameraOverhaul](https://github.com/Mirsario/Minecraft-CameraOverhaul)
 * [GT:NH buildscript](https://github.com/GTNewHorizons/ExampleMod1.7.10).
 
 ## License
@@ -54,6 +56,7 @@ This mod can be installed on client, server, or both. Armor walking sounds are m
 * [Dynamic Surroundings assets and code are licensed under MIT](https://github.com/OreCruncher/DynamicSurroundingsFabric/blob/main/LICENSE).
 * [Legendary Survival Overhaul assets and code are licensed under LGPL 2.1](https://github.com/Alex-Hashtag/LegendarySurvivalOverhaul/blob/1.21.1/LICENSE.txt).
 * [Smooth Gui code is licensed under CC0-1.0](https://github.com/Ezzenix/SmoothGui/blob/main/LICENSE).
+* [Minecraft-CameraOverhaul code is licensed under GPL-3.0](https://github.com/Mirsario/Minecraft-CameraOverhaul/blob/dev/LICENSE.md)
 
 ## Buy me some creatine
 

@@ -73,6 +73,9 @@ public class GuiFactory implements IModGuiFactory {
                             .getCategory(Config.Categories.smoothGui)),
                     new ConfigElement(
                         Config.getRawConfig()
+                            .getCategory(Config.Categories.camera)),
+                    new ConfigElement(
+                        Config.getRawConfig()
                             .getCategory(Config.Categories.debug))),
                 AnExtraTouch.MODID,
                 AnExtraTouch.MODID,
