@@ -111,8 +111,8 @@ public class Config {
     public static boolean cameraOverhaulEnabled = true;
     public static boolean cameraOverhaulThirdPerson = true;
     // turning roll
-    public static float cameraTurningRollAccumulation = 1.0f;
-    public static float cameraTurningRollIntensity = 1.25f;
+    public static float cameraTurningRollAccumulation = 0.7f;
+    public static float cameraTurningRollIntensity = 0.9f;
     public static float cameraTurningRollSmoothing = 1.0f;
     // camera sway
     public static float cameraSwayIntensity = 0.6f;
@@ -129,13 +129,13 @@ public class Config {
     // walking context
     public static float cameraWalkStrafingRoll = 10.0f;
     public static float cameraWalkForwardPitch = 7.0f;
-    public static float cameraWalkVerticalPitch = 2.5f;
+    public static float cameraWalkVerticalPitch = 4.5f;
     public static float cameraWalkHorizSmoothing = 1.0f;
-    public static float cameraWalkVertSmoothing = 1.0f;
+    public static float cameraWalkVertSmoothing = 0.75f;
     // riding context
     public static float cameraRideStrafingRoll = 5.0f;
     public static float cameraRideForwardPitch = 3.5f;
-    public static float cameraRideVerticalPitch = 5.0f;
+    public static float cameraRideVerticalPitch = 7.0f;
     public static float cameraRideHorizSmoothing = 1.0f;
     public static float cameraRideVertSmoothing = 1.0f;
 
