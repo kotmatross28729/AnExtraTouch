@@ -74,7 +74,7 @@ public class BreathHandler {
             int by = MathHelper.floor_double(event.entity.boundingBox.minY);
             int bz = MathHelper.floor_double(event.entity.posZ);
             BiomeGenBase biome = event.entity.worldObj.getBiomeGenForCoords(bx, bz);
-            if (!AnExtraTouch.vic.breath.isColdBiome(biome.biomeName)) {
+            if (!AnExtraTouch.vic.breath.isColdBiome(biome)) {
                 float temp = biome.getFloatTemperature(bx, by, bz);
                 if (temp >= Config.breathTemperatureThreshold && by < Config.breathAltitudeThreshold) {
                     return;

@@ -1,6 +1,5 @@
 package org.fentanylsolutions.anextratouch.varinstances.configcaches;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -9,6 +8,7 @@ import net.minecraft.client.entity.EntityOtherPlayerMP;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.world.biome.BiomeGenBase;
 
 import org.fentanylsolutions.anextratouch.AnExtraTouch;
 import org.fentanylsolutions.anextratouch.Config;
@@ -23,6 +23,7 @@ public class BreathCache {
     public Object2FloatOpenHashMap<Class<? extends Entity>> babyBreathForwardDists;
     private HashMap<Integer, String> breathDimensionModes;
     private HashSet<String> breathColdBiomes;
+    private HashSet<Integer> breathColdBiomeIds;
 
     public void populateFromConfig() {
         breathUpOffsets = new Object2FloatOpenHashMap<>();
@@ -136,7 +137,21 @@ public class BreathCache {
         }
 
         breathColdBiomes = new HashSet<>();
-        Collections.addAll(breathColdBiomes, Config.breathColdBiomes);
+        breathColdBiomeIds = new HashSet<>();
+        for (String rawEntry : Config.breathColdBiomes) {
+            if (rawEntry == null) {
+                continue;
+            }
+            String entry = rawEntry.trim();
+            if (entry.isEmpty()) {
+                continue;
+            }
+            try {
+                breathColdBiomeIds.add(Integer.parseInt(entry));
+            } catch (NumberFormatException ignored) {
+                breathColdBiomes.add(entry);
+            }
+        }
     }
 
     public String getBreathDimensionMode(int dimensionId) {
@@ -145,5 +160,12 @@ public class BreathCache {
 
     public boolean isColdBiome(String biomeName) {
         return breathColdBiomes.contains(biomeName);
+    }
+
+    public boolean isColdBiome(BiomeGenBase biome) {
+        if (biome == null) {
+            return false;
+        }
+        return breathColdBiomes.contains(biome.biomeName) || breathColdBiomeIds.contains(biome.biomeID);
     }
 }

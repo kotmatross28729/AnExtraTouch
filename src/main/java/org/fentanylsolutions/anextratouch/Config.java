@@ -404,7 +404,7 @@ public class Config {
                 "breathColdBiomes",
                 Categories.breath,
                 breathColdBiomes,
-                "Biomes that always show breath regardless of temperature. Use biome names, e.g. \"Extreme Hills\", \"FrozenRiver\".");
+                "Biomes that always show breath regardless of temperature. Accepts biome names and numeric biome IDs, e.g. \"Extreme Hills\", \"FrozenRiver\", \"3\", \"158\".");
             breathRenderDistance = config.getInt(
                 "breathRenderDistance",
                 Categories.breath,
