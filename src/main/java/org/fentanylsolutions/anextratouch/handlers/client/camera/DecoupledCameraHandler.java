@@ -3,7 +3,12 @@ package org.fentanylsolutions.anextratouch.handlers.client.camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.item.EnumAction;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.MathHelper;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.Vec3;
 
 import org.fentanylsolutions.anextratouch.Config;
 import org.fentanylsolutions.anextratouch.compat.ShoulderSurfingCompat;
@@ -39,6 +44,12 @@ public final class DecoupledCameraHandler {
 
     // Camera yaw snapshot when free look is NOT active (matches modern freeLookYRot)
     private static float freeLookYaw;
+
+    // Turning toward interaction target
+    private static int turningLockTicks;
+
+    // Aiming state (bow draw, etc.) - player rotation follows camera
+    private static boolean aiming;
 
     // Entity tracking for reset
     private static int lastEntityId = Integer.MIN_VALUE;
@@ -106,12 +117,36 @@ public final class DecoupledCameraHandler {
         // Update free look state
         freeLooking = FREE_LOOK_KEY.getKeyCode() != 0 && Keyboard.isKeyDown(FREE_LOOK_KEY.getKeyCode());
 
+        // Disable free look while aiming (matches modern: isFreeLooking = FREE_LOOK.isDown() && !isAiming)
+        if (aiming) {
+            freeLooking = false;
+        }
+
         // When not free-looking, store freeLookYaw and decay offsets
         // Matches modern ShoulderSurfingCamera.tick() lines 98-103
         if (!freeLooking) {
             freeLookYaw = cameraYaw;
             yawOffset *= Config.decoupledCameraOffsetDecay;
             pitchOffset *= Config.decoupledCameraOffsetDecay;
+        }
+
+        // Turning toward interaction target
+        // Ported from modern ShoulderSurfingImpl.tick() + EntityHelper.lookAtTarget()
+        if (turningLockTicks > 0) {
+            turningLockTicks--;
+        }
+
+        if (!freeLooking && !aiming && entity instanceof EntityPlayerSP) {
+            EntityPlayerSP player = (EntityPlayerSP) entity;
+            boolean acting = mc.gameSettings.keyBindAttack.getIsKeyPressed()
+                || mc.gameSettings.keyBindUseItem.getIsKeyPressed();
+
+            if (acting && mc.objectMouseOver != null
+                && mc.objectMouseOver.typeOfHit != MovingObjectPosition.MovingObjectType.MISS
+                && mc.objectMouseOver.hitVec != null) {
+                lookAtTarget(player, mc.objectMouseOver.hitVec);
+                turningLockTicks = Config.decoupledCameraTurningLockTicks;
+            }
         }
     }
 
@@ -147,6 +182,21 @@ public final class DecoupledCameraHandler {
         cameraYaw += scaledYaw;
         cameraPitch = MathHelper.clamp_float(cameraPitch - scaledPitch, -90f, 90f);
 
+        // When aiming, immediately sync player rotation toward crosshair target.
+        // Matches modern turn() lines 429-434 + lookAtCrosshairTargetInternal().
+        // Uses parallax-corrected direction (player→hitVec) so arrows hit where the
+        // crosshair points despite the camera's shoulder offset.
+        if (aiming) {
+            EntityLivingBase entity = Minecraft.getMinecraft().renderViewEntity;
+            if (entity != null) {
+                float[] aim = computeAimRotation(entity);
+                entity.prevRotationYaw += MathHelper.wrapAngleTo180_float(aim[0] - entity.rotationYaw);
+                entity.prevRotationPitch += aim[1] - entity.rotationPitch;
+                entity.rotationYaw = aim[0];
+                entity.rotationPitch = aim[1];
+            }
+        }
+
         return true;
     }
 
@@ -161,15 +211,42 @@ public final class DecoupledCameraHandler {
             return;
         }
 
+        // Aiming detection - when using a bow etc., sync player rotation to camera
+        // so projectiles fire where the crosshair points.
+        // Computed here (before arrow creation in the same tick) for correct timing.
+        boolean wasAiming = aiming;
+        aiming = computeAiming(player);
+
+        if (!wasAiming && aiming) {
+            // Aiming just started - set turning lock so body doesn't snap away on release
+            turningLockTicks = Config.decoupledCameraTurningLockTicks;
+        }
+
+        if (aiming) {
+            // Sync player rotation toward crosshair target (parallax-corrected).
+            // Arrow/projectile creation uses player.rotationYaw/Pitch directly.
+            float[] aim = computeAimRotation(player);
+            player.rotationYaw = aim[0];
+            player.rotationPitch = aim[1];
+            // No movement input rotation needed - player yaw already matches aim direction
+            return;
+        }
+
+        if (wasAiming && !aiming) {
+            turningLockTicks = Config.decoupledCameraTurningLockTicks;
+        }
+
         float strafe = player.moveStrafing;
         float forward = player.moveForward;
         boolean isMoving = strafe * strafe + forward * forward > 0f;
+        boolean turningLocked = turningLockTicks > 0;
 
         // Smooth head pitch toward half camera pitch when moving
         // Matches modern: xRot = xRotO + degreesDifference(xRotO, cameraXRot * 0.5F) * 0.25F
         // Don't update prevRotationPitch, let vanilla's tick-start prev=current cycle handle it,
         // so the renderer interpolates smoothly between ticks instead of snapping.
-        if (isMoving) {
+        // Skip when turning is locked - lookAtTarget already set the pitch.
+        if (isMoving && !turningLocked) {
             float targetPitch = cameraPitch * 0.5f;
             player.rotationPitch += degreesDifference(player.rotationPitch, targetPitch)
                 * Config.decoupledCameraPlayerTurnSpeed;
@@ -189,24 +266,28 @@ public final class DecoupledCameraHandler {
             return;
         }
 
-        float yRot = player.rotationYaw;
+        // When turning is locked (player facing interaction target), skip body yaw rotation
+        // but still rotate movement input to be camera-relative (step 4)
+        if (!turningLocked) {
+            float yRot = player.rotationYaw;
 
-        // Step 1: Rotate raw input by camera yaw to get world-space movement direction
-        // Matches modern: Vec2f rotated = moveVector.rotateDegrees(cameraYRot)
-        float[] worldMove = rotateDegrees(strafe, forward, cameraYaw);
+            // Step 1: Rotate raw input by camera yaw to get world-space movement direction
+            // Matches modern: Vec2f rotated = moveVector.rotateDegrees(cameraYRot)
+            float[] worldMove = rotateDegrees(strafe, forward, cameraYaw);
 
-        // Step 2: Calculate target player yaw from world-space movement
-        // Matches modern: yRot = atan2(-rotated.x(), rotated.y()) * RAD_TO_DEG
-        float targetYaw = (float) (Math.atan2(-worldMove[0], worldMove[1]) * (180.0 / Math.PI));
+            // Step 2: Calculate target player yaw from world-space movement
+            // Matches modern: yRot = atan2(-rotated.x(), rotated.y()) * RAD_TO_DEG
+            float targetYaw = (float) (Math.atan2(-worldMove[0], worldMove[1]) * (180.0 / Math.PI));
 
-        // Step 3: Smooth player yaw toward target
-        // Matches modern: yRot = yRotO + degreesDifference(yRotO, yRot) * 0.25F
-        float newYaw = yRot + degreesDifference(yRot, targetYaw) * Config.decoupledCameraPlayerTurnSpeed;
+            // Step 3: Smooth player yaw toward target
+            // Matches modern: yRot = yRotO + degreesDifference(yRotO, yRot) * 0.25F
+            float newYaw = yRot + degreesDifference(yRot, targetYaw) * Config.decoupledCameraPlayerTurnSpeed;
 
-        // Update player rotation with proper prev tracking to avoid jitter
-        if (player.ridingEntity == null) {
-            player.prevRotationYaw += newYaw - player.rotationYaw;
-            player.rotationYaw = newYaw;
+            // Update player rotation with proper prev tracking to avoid jitter
+            if (player.ridingEntity == null) {
+                player.prevRotationYaw += newYaw - player.rotationYaw;
+                player.rotationYaw = newYaw;
+            }
         }
 
         // Step 4: Rotate raw input by difference between (new) player yaw and camera yaw
@@ -243,6 +324,14 @@ public final class DecoupledCameraHandler {
         return active && freeLooking;
     }
 
+    public static boolean isTurningLocked() {
+        return active && turningLockTicks > 0;
+    }
+
+    public static boolean isAiming() {
+        return active && aiming;
+    }
+
     /**
      * Raw (non-interpolated) effective camera yaw for entity rotation swapping.
      */
@@ -271,6 +360,80 @@ public final class DecoupledCameraHandler {
         return MathHelper.clamp_float(prevCameraPitch + prevPitchOffset, -90f, 90f);
     }
 
+    /**
+     * Computes parallax-corrected aim rotation for the player.
+     * If objectMouseOver has a valid hit, returns yaw/pitch from the player's eye
+     * to the hit point (so arrows converge on the crosshair target despite camera offset).
+     * Falls back to camera direction for sky shots (no hit).
+     * Ported from modern ShoulderSurfingImpl.lookAtCrosshairTargetInternal().
+     */
+    private static float[] computeAimRotation(EntityLivingBase entity) {
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc.objectMouseOver != null
+            && mc.objectMouseOver.typeOfHit != MovingObjectPosition.MovingObjectType.MISS
+            && mc.objectMouseOver.hitVec != null) {
+            double dx = mc.objectMouseOver.hitVec.xCoord - entity.posX;
+            double dy = mc.objectMouseOver.hitVec.yCoord - (entity.posY + entity.getEyeHeight());
+            double dz = mc.objectMouseOver.hitVec.zCoord - entity.posZ;
+            double horizontalDist = Math.sqrt(dx * dx + dz * dz);
+            float yaw = (float) (Math.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0f;
+            float pitch = MathHelper.clamp_float(
+                (float) (-(Math.atan2(dy, horizontalDist) * (180.0 / Math.PI))), -90.0f, 90.0f);
+            return new float[] { yaw, pitch };
+        }
+        // No hit (sky shot) - fall back to camera direction
+        return new float[] {
+            cameraYaw + yawOffset,
+            MathHelper.clamp_float(cameraPitch + pitchOffset, -90f, 90f)
+        };
+    }
+
+    /**
+     * Checks if the player is currently using an aiming item (bow, etc.).
+     * Matches by EnumAction name (configurable) or by item registry name override.
+     */
+    private static boolean computeAiming(EntityPlayerSP player) {
+        if (!player.isUsingItem()) return false;
+        ItemStack itemInUse = player.getItemInUse();
+        if (itemInUse == null) return false;
+
+        // Check by EnumAction name
+        String actionName = itemInUse.getItemUseAction().name();
+        for (String action : Config.decoupledCameraAimingActions) {
+            if (actionName.equalsIgnoreCase(action)) {
+                return true;
+            }
+        }
+
+        // Check by item registry name override
+        String registryName = Item.itemRegistry.getNameForObject(itemInUse.getItem());
+        if (registryName != null) {
+            for (String item : Config.decoupledCameraAimingItems) {
+                if (registryName.equals(item)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Rotates the player to look at the given target position.
+     * Ported from modern EntityHelper.lookAtTarget().
+     * Does NOT update prev rotation, so the renderer interpolates smoothly.
+     */
+    private static void lookAtTarget(EntityPlayerSP player, Vec3 hitVec) {
+        double dx = hitVec.xCoord - player.posX;
+        double dy = hitVec.yCoord - (player.posY + player.getEyeHeight());
+        double dz = hitVec.zCoord - player.posZ;
+        double horizontalDist = Math.sqrt(dx * dx + dz * dz);
+
+        player.rotationYaw = (float) (Math.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0f;
+        player.rotationPitch = MathHelper.clamp_float(
+            (float) (-(Math.atan2(dy, horizontalDist) * (180.0 / Math.PI))), -90.0f, 90.0f);
+    }
+
     private static void resetState(EntityLivingBase entity) {
         cameraYaw = entity.rotationYaw;
         cameraPitch = entity.rotationPitch;
@@ -282,6 +445,8 @@ public final class DecoupledCameraHandler {
         prevPitchOffset = 0f;
         freeLookYaw = cameraYaw;
         freeLooking = false;
+        turningLockTicks = 0;
+        aiming = false;
     }
 
     /**

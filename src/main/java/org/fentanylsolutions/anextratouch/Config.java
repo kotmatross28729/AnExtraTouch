@@ -156,6 +156,9 @@ public class Config {
     public static boolean decoupledCameraEnabled = true;
     public static float decoupledCameraOffsetDecay = 0.5f;
     public static float decoupledCameraPlayerTurnSpeed = 0.25f;
+    public static int decoupledCameraTurningLockTicks = 10;
+    public static String[] decoupledCameraAimingActions = { "bow" };
+    public static String[] decoupledCameraAimingItems = {};
 
     // sound shakes
     public static boolean cameraSoundShakesEnabled = true;
@@ -862,6 +865,23 @@ public class Config {
                 0.0f,
                 1.0f,
                 "How fast the player body turns to face movement direction when decoupled. 0 = no turning, 1 = instant.");
+            decoupledCameraTurningLockTicks = config.getInt(
+                "decoupledCameraTurningLockTicks",
+                Categories.camera,
+                decoupledCameraTurningLockTicks,
+                0,
+                100,
+                "How many ticks the player body stays facing the interaction target after attacking or using. 0 = disabled.");
+            decoupledCameraAimingActions = config.getStringList(
+                "decoupledCameraAimingActions",
+                Categories.camera,
+                decoupledCameraAimingActions,
+                "Item use actions that trigger aiming mode (player body follows camera so projectiles fire at crosshair). Valid values: bow, eat, drink, block, none.");
+            decoupledCameraAimingItems = config.getStringList(
+                "decoupledCameraAimingItems",
+                Categories.camera,
+                decoupledCameraAimingItems,
+                "Additional item registry names that trigger aiming mode regardless of action type. Format: \"modid:itemname\", e.g. \"minecraft:bow\".");
 
             // sound shakes
             cameraSoundShakesEnabled = config.getBoolean(
