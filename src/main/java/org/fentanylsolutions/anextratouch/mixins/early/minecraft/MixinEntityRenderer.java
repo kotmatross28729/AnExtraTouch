@@ -42,13 +42,21 @@ public abstract class MixinEntityRenderer {
     @Unique
     private static final FloatBuffer anextratouch$matBuf = BufferUtils.createFloatBuffer(16);
     @Unique
-    private float anextratouch$smoothedCamDist = -1f;
+    private float anextratouch$smoothedCamDistPrev = -1f;
+    @Unique
+    private float anextratouch$smoothedCamDistCurr = -1f;
+    @Unique
+    private int anextratouch$smoothedCamDistTick = Integer.MIN_VALUE;
 
     // Smooth camera follow (positional lag)
     @Unique
-    private double anextratouch$followX, anextratouch$followY, anextratouch$followZ;
+    private double anextratouch$followPrevX, anextratouch$followPrevY, anextratouch$followPrevZ;
+    @Unique
+    private double anextratouch$followCurrX, anextratouch$followCurrY, anextratouch$followCurrZ;
     @Unique
     private boolean anextratouch$followInit;
+    @Unique
+    private int anextratouch$followTick = Integer.MIN_VALUE;
 
     /**
      * Swaps entity rotation to decoupled camera rotation. Call anextratouch$restoreRotation() after.
@@ -102,7 +110,7 @@ public abstract class MixinEntityRenderer {
     @Inject(method = "orientCamera", at = @At("RETURN"))
     private void anextratouch$onOrientCamera(float partialTicks, CallbackInfo ci) {
         // Smooth camera distance changes from clipping prevention
-        anextratouch$smoothCameraClipping();
+        anextratouch$smoothCameraClipping(partialTicks);
         // Smooth camera follow (positional lag behind entity)
         anextratouch$smoothCameraFollow(mc.renderViewEntity, partialTicks);
         // Extract camera world position from GL matrix before overhaul modifies rotation.
@@ -139,10 +147,12 @@ public abstract class MixinEntityRenderer {
      * the distance is interpolated using the configured smoothing factor.
      */
     @Unique
-    private void anextratouch$smoothCameraClipping() {
+    private void anextratouch$smoothCameraClipping(float partialTicks) {
         float smoothing = Config.cameraClippingSmoothing;
-        if (smoothing <= 0f || mc.gameSettings.thirdPersonView == 0 || DecoupledCameraHandler.isActive()) {
-            anextratouch$smoothedCamDist = -1f;
+        if (smoothing <= 0f || mc.gameSettings.thirdPersonView == 0) {
+            anextratouch$smoothedCamDistPrev = -1f;
+            anextratouch$smoothedCamDistCurr = -1f;
+            anextratouch$smoothedCamDistTick = Integer.MIN_VALUE;
             return;
         }
 
@@ -154,18 +164,38 @@ public abstract class MixinEntityRenderer {
         float m14 = anextratouch$matBuf.get(14);
         float dist = (float) Math.sqrt(m12 * m12 + m13 * m13 + m14 * m14);
 
-        if (anextratouch$smoothedCamDist < 0f || dist < 0.001f) {
-            anextratouch$smoothedCamDist = dist;
+        if (anextratouch$smoothedCamDistCurr < 0f || dist < 0.001f) {
+            anextratouch$smoothedCamDistPrev = dist;
+            anextratouch$smoothedCamDistCurr = dist;
+            EntityLivingBase entity = mc.renderViewEntity;
+            anextratouch$smoothedCamDistTick = entity != null ? entity.ticksExisted : Integer.MIN_VALUE;
             return;
         }
 
-        float smoothed = anextratouch$smoothedCamDist * smoothing + dist * (1f - smoothing);
-        // Never exceed the clipped distance (would clip into walls).
-        // Snap in instantly, smooth out gradually.
+        EntityLivingBase entity = mc.renderViewEntity;
+        int tick = entity != null ? entity.ticksExisted : Integer.MIN_VALUE;
+
+        if (tick != anextratouch$smoothedCamDistTick) {
+            anextratouch$smoothedCamDistTick = tick;
+            anextratouch$smoothedCamDistPrev = anextratouch$smoothedCamDistCurr;
+            float smoothed = anextratouch$smoothedCamDistCurr * smoothing + dist * (1f - smoothing);
+            // Never exceed the clipped distance (would clip into walls).
+            // Snap in instantly, smooth out gradually.
+            if (smoothed > dist) {
+                smoothed = dist;
+            }
+            anextratouch$smoothedCamDistCurr = smoothed;
+        } else if (anextratouch$smoothedCamDistCurr > dist) {
+            // Within the same tick/pass chain, still snap in immediately for clipping safety.
+            anextratouch$smoothedCamDistPrev = Math.min(anextratouch$smoothedCamDistPrev, dist);
+            anextratouch$smoothedCamDistCurr = dist;
+        }
+
+        float smoothed = anextratouch$smoothedCamDistPrev
+            + (anextratouch$smoothedCamDistCurr - anextratouch$smoothedCamDistPrev) * partialTicks;
         if (smoothed > dist) {
             smoothed = dist;
         }
-        anextratouch$smoothedCamDist = smoothed;
 
         if (Math.abs(smoothed - dist) < 0.001f) return;
 
@@ -184,10 +214,9 @@ public abstract class MixinEntityRenderer {
     @Unique
     private void anextratouch$smoothCameraFollow(EntityLivingBase entity, float partialTicks) {
         float smoothing = Config.cameraFollowSmoothing;
-        if (smoothing <= 0f || entity == null
-            || mc.gameSettings.thirdPersonView == 0
-            || DecoupledCameraHandler.isActive()) {
+        if (smoothing <= 0f || entity == null || mc.gameSettings.thirdPersonView == 0) {
             anextratouch$followInit = false;
+            anextratouch$followTick = Integer.MIN_VALUE;
             return;
         }
 
@@ -196,32 +225,54 @@ public abstract class MixinEntityRenderer {
         double renderZ = entity.prevPosZ + (entity.posZ - entity.prevPosZ) * partialTicks;
 
         if (!anextratouch$followInit) {
-            anextratouch$followX = renderX;
-            anextratouch$followY = renderY;
-            anextratouch$followZ = renderZ;
+            anextratouch$followPrevX = renderX;
+            anextratouch$followPrevY = renderY;
+            anextratouch$followPrevZ = renderZ;
+            anextratouch$followCurrX = renderX;
+            anextratouch$followCurrY = renderY;
+            anextratouch$followCurrZ = renderZ;
+            anextratouch$followTick = entity.ticksExisted;
             anextratouch$followInit = true;
             return;
         }
 
-        // Snap on teleport (large position change)
-        double dx = renderX - anextratouch$followX;
-        double dy = renderY - anextratouch$followY;
-        double dz = renderZ - anextratouch$followZ;
-        if (dx * dx + dy * dy + dz * dz > 64.0) {
-            anextratouch$followX = renderX;
-            anextratouch$followY = renderY;
-            anextratouch$followZ = renderZ;
-            return;
+        // Update smoothing state once per game tick to avoid pass-to-pass feedback jitter.
+        if (entity.ticksExisted != anextratouch$followTick) {
+            anextratouch$followTick = entity.ticksExisted;
+            anextratouch$followPrevX = anextratouch$followCurrX;
+            anextratouch$followPrevY = anextratouch$followCurrY;
+            anextratouch$followPrevZ = anextratouch$followCurrZ;
+
+            // Snap on teleport (large position change)
+            double dx = entity.posX - anextratouch$followCurrX;
+            double dy = entity.posY - anextratouch$followCurrY;
+            double dz = entity.posZ - anextratouch$followCurrZ;
+            if (dx * dx + dy * dy + dz * dz > 64.0) {
+                anextratouch$followPrevX = renderX;
+                anextratouch$followPrevY = renderY;
+                anextratouch$followPrevZ = renderZ;
+                anextratouch$followCurrX = renderX;
+                anextratouch$followCurrY = renderY;
+                anextratouch$followCurrZ = renderZ;
+                return;
+            }
+
+            float factor = Math.max(1f - smoothing, 0.01f);
+            anextratouch$followCurrX += (entity.posX - anextratouch$followCurrX) * factor;
+            anextratouch$followCurrY += (entity.posY - anextratouch$followCurrY) * factor;
+            anextratouch$followCurrZ += (entity.posZ - anextratouch$followCurrZ) * factor;
         }
 
-        float factor = Math.max(1f - smoothing, 0.01f);
-        anextratouch$followX += (renderX - anextratouch$followX) * factor;
-        anextratouch$followY += (renderY - anextratouch$followY) * factor;
-        anextratouch$followZ += (renderZ - anextratouch$followZ) * factor;
+        double followX = anextratouch$followPrevX
+            + (anextratouch$followCurrX - anextratouch$followPrevX) * partialTicks;
+        double followY = anextratouch$followPrevY
+            + (anextratouch$followCurrY - anextratouch$followPrevY) * partialTicks;
+        double followZ = anextratouch$followPrevZ
+            + (anextratouch$followCurrZ - anextratouch$followPrevZ) * partialTicks;
 
-        double offX = anextratouch$followX - renderX;
-        double offY = anextratouch$followY - renderY;
-        double offZ = anextratouch$followZ - renderZ;
+        double offX = followX - renderX;
+        double offY = followY - renderY;
+        double offZ = followZ - renderZ;
 
         if (Math.abs(offX) + Math.abs(offY) + Math.abs(offZ) < 0.0001) return;
 
