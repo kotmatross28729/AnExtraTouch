@@ -161,6 +161,9 @@ public class Config {
     public static String[] decoupledCameraAimingItems = { "minecraft:snowball", "minecraft:egg",
         "minecraft:ender_pearl", "minecraft:ender_eye", "minecraft:experience_bottle", "minecraft:fishing_rod",
         "minecraft:potion@16384-32767" };
+    public static boolean decoupledCameraAimFirstPerson = true;
+    public static int decoupledCameraAimTransitionTicks = 5;
+    public static String decoupledCameraAimTransitionEasing = "smooth";
 
     // sound shakes
     public static boolean cameraSoundShakesEnabled = true;
@@ -884,6 +887,24 @@ public class Config {
                 Categories.camera,
                 decoupledCameraAimingItems,
                 "Items that couple the camera when held (for instant-throw projectiles like snowballs). Player body faces crosshair direction so projectiles fire accurately. Format: \"modid:itemname\" (any meta), \"modid:itemname@N\" (exact meta), \"modid:itemname@N-M\" (meta range). Splash potions use meta 16384-32767.");
+            decoupledCameraAimFirstPerson = config.getBoolean(
+                "decoupledCameraAimFirstPerson",
+                Categories.camera,
+                decoupledCameraAimFirstPerson,
+                "Switch to vanilla first person view when aiming in decoupled camera mode. Gives correct bow/projectile aiming for free.");
+            decoupledCameraAimTransitionTicks = config.getInt(
+                "decoupledCameraAimTransitionTicks",
+                Categories.camera,
+                decoupledCameraAimTransitionTicks,
+                1,
+                40,
+                "Duration of the aim-to-first-person transition in ticks (20 ticks = 1 second).");
+            decoupledCameraAimTransitionEasing = config.getString(
+                "decoupledCameraAimTransitionEasing",
+                Categories.camera,
+                decoupledCameraAimTransitionEasing,
+                "Easing curve for the aim transition. Options: linear, ease_in, ease_out, ease_in_out, smooth.",
+                new String[] { "linear", "ease_in", "ease_out", "ease_in_out", "smooth" });
 
             // sound shakes
             cameraSoundShakesEnabled = config.getBoolean(

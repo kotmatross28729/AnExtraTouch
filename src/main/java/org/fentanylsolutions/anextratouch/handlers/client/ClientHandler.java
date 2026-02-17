@@ -42,6 +42,7 @@ public class ClientHandler {
     @SubscribeEvent(priority = EventPriority.NORMAL, receiveCanceled = true)
     public void onRenderCrosshair(RenderGameOverlayEvent.Pre event) {
         if (event.type == RenderGameOverlayEvent.ElementType.CROSSHAIRS && DecoupledCameraHandler.isActive()
+            && !DecoupledCameraHandler.isAimFirstPerson()
             && ShoulderSurfingCompat.isAvailable()) {
             event.setCanceled(true);
         }
@@ -55,6 +56,7 @@ public class ClientHandler {
     public void onRenderOverlayPost(RenderGameOverlayEvent.Post event) {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL) return;
         if (!DecoupledCameraHandler.isActive()) return;
+        if (DecoupledCameraHandler.isAimFirstPerson()) return; // vanilla crosshair shown in FP
         if (!ShoulderSurfingCompat.shouldRenderCrosshair()) return;
 
         Minecraft mc = Minecraft.getMinecraft();
@@ -94,6 +96,7 @@ public class ClientHandler {
     public void onRenderWorldLastSwap(RenderWorldLastEvent event) {
         rotationSwapped = false;
         if (!DecoupledCameraHandler.isActive()) return;
+        if (DecoupledCameraHandler.isAimFirstPerson()) return; // vanilla FP handles rotation
 
         EntityLivingBase entity = Minecraft.getMinecraft().renderViewEntity;
         if (entity == null) return;

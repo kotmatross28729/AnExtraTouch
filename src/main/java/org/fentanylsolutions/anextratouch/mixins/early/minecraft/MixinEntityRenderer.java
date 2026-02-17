@@ -42,6 +42,7 @@ public abstract class MixinEntityRenderer {
     private void anextratouch$swapRotation() {
         anextratouch$rotationSwapped = false;
         if (!DecoupledCameraHandler.isActive()) return;
+        if (DecoupledCameraHandler.isAimFirstPerson()) return; // vanilla FP handles rotation
 
         EntityLivingBase entity = mc.renderViewEntity;
         if (entity == null) return;
@@ -92,6 +93,10 @@ public abstract class MixinEntityRenderer {
             DecoupledCameraHandler.updateCameraPosition(partialTicks);
         }
         anextratouch$applyCameraOverhaul(mc.renderViewEntity, partialTicks);
+        // Aim-to-first-person transition: smoothly move camera from third-person to entity eye
+        if (DecoupledCameraHandler.isActive() && mc.renderViewEntity != null) {
+            DecoupledCameraHandler.applyAimTransition(partialTicks, mc.renderViewEntity);
+        }
         anextratouch$restoreRotation();
     }
 

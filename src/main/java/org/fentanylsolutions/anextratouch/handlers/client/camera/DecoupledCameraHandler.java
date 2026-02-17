@@ -56,6 +56,12 @@ public final class DecoupledCameraHandler {
     // Aiming state (bow draw, etc.) - player rotation follows camera
     private static boolean aiming;
 
+    // Aim-to-first-person transition
+    private static float aimTransition; // 0.0 = third person, 1.0 = first person
+    private static float prevAimTransition;
+    private static boolean aimFirstPersonActive; // true when thirdPersonView has been switched to 0
+    private static int savedThirdPersonView = -1;
+
     // Camera world position (extracted from GL modelview matrix after orientCamera)
     private static final FloatBuffer MODELVIEW_BUFFER = BufferUtils.createFloatBuffer(16);
     private static double cameraWorldX, cameraWorldY, cameraWorldZ;
@@ -112,7 +118,9 @@ public final class DecoupledCameraHandler {
         }
 
         boolean shouldBeActive = Config.decoupledCameraEnabled && (ShoulderSurfingCompat.isShoulderSurfingActive()
-            || (!ShoulderSurfingCompat.isAvailable() && mc.gameSettings.thirdPersonView > 0));
+            || (!ShoulderSurfingCompat.isAvailable() && mc.gameSettings.thirdPersonView > 0)
+            || aimFirstPersonActive
+            || aimTransition > 0f);
 
         EntityLivingBase entity = mc.renderViewEntity;
         if (entity == null) {
@@ -176,7 +184,7 @@ public final class DecoupledCameraHandler {
             turningLockTicks--;
         }
 
-        if (!freeLooking && !aiming && entity instanceof EntityPlayerSP) {
+        if (!freeLooking && !aiming && !aimFirstPersonActive && entity instanceof EntityPlayerSP) {
             EntityPlayerSP player = (EntityPlayerSP) entity;
             boolean acting = mc.gameSettings.keyBindAttack.getIsKeyPressed()
                 || mc.gameSettings.keyBindUseItem.getIsKeyPressed();
@@ -187,6 +195,45 @@ public final class DecoupledCameraHandler {
                 lookAtTarget(player, mc.objectMouseOver.hitVec);
                 turningLockTicks = Config.decoupledCameraTurningLockTicks;
             }
+        }
+
+        // Aim-to-first-person transition
+        prevAimTransition = aimTransition;
+        float target = (aiming && Config.decoupledCameraAimFirstPerson) ? 1.0f : 0.0f;
+        float speed = 1.0f / Math.max(1, Config.decoupledCameraAimTransitionTicks);
+        if (aimTransition < target) {
+            aimTransition = Math.min(aimTransition + speed, target);
+        } else if (aimTransition > target) {
+            aimTransition = Math.max(aimTransition - speed, target);
+        }
+
+        // Handle first-person view switch
+        boolean wasAimFP = aimFirstPersonActive;
+        aimFirstPersonActive = aimTransition >= 1.0f && Config.decoupledCameraAimFirstPerson && aiming;
+
+        if (aimFirstPersonActive && !wasAimFP) {
+            savedThirdPersonView = mc.gameSettings.thirdPersonView;
+            mc.gameSettings.thirdPersonView = 0;
+        } else if (!aimFirstPersonActive && wasAimFP) {
+            mc.gameSettings.thirdPersonView = savedThirdPersonView;
+            savedThirdPersonView = -1;
+            // Re-enable shoulder surfing (SS disabled itself when thirdPersonView changed to 0)
+            ShoulderSurfingCompat.setShoulderSurfing(true);
+            // Sync camera to player rotation from first person
+            if (entity != null) {
+                cameraYaw = entity.rotationYaw;
+                cameraPitch = entity.rotationPitch;
+                prevCameraYaw = cameraYaw;
+                prevCameraPitch = cameraPitch;
+            }
+        }
+
+        // While in aim FP, continuously sync camera to player rotation
+        if (aimFirstPersonActive && entity != null) {
+            cameraYaw = entity.rotationYaw;
+            cameraPitch = entity.rotationPitch;
+            prevCameraYaw = cameraYaw;
+            prevCameraPitch = cameraPitch;
         }
     }
 
@@ -201,6 +248,9 @@ public final class DecoupledCameraHandler {
     public static boolean onSetAngles(float yaw, float pitch) {
         if (!active) {
             return false;
+        }
+        if (aimFirstPersonActive) {
+            return false; // vanilla FP handles mouse
         }
 
         // Match vanilla Entity.setAngles scaling
@@ -261,6 +311,14 @@ public final class DecoupledCameraHandler {
             // Aiming just started - set turning lock so body doesn't snap away on release
             turningLockTicks = Config.decoupledCameraTurningLockTicks;
         }
+        if (wasAiming && !aiming) {
+            turningLockTicks = Config.decoupledCameraTurningLockTicks;
+        }
+
+        // When in full first-person aim mode, vanilla handles everything
+        if (aimFirstPersonActive) {
+            return;
+        }
 
         if (aiming) {
             // Sync player rotation toward crosshair target (parallax-corrected).
@@ -270,10 +328,6 @@ public final class DecoupledCameraHandler {
             player.rotationPitch = aim[1];
             // No movement input rotation needed - player yaw already matches aim direction
             return;
-        }
-
-        if (wasAiming && !aiming) {
-            turningLockTicks = Config.decoupledCameraTurningLockTicks;
         }
 
         float strafe = player.moveStrafing;
@@ -370,6 +424,60 @@ public final class DecoupledCameraHandler {
 
     public static boolean isAiming() {
         return active && aiming;
+    }
+
+    public static boolean isAimFirstPerson() {
+        return aimFirstPersonActive;
+    }
+
+    /**
+     * Applies the aim-to-first-person camera transition by modifying the GL modelview matrix.
+     * Smoothly moves the camera from its third-person position toward the entity eye (GL origin).
+     * Called from MixinEntityRenderer after orientCamera and camera overhaul.
+     */
+    public static void applyAimTransition(float partialTicks, EntityLivingBase entity) {
+        if (!Config.decoupledCameraAimFirstPerson) return;
+        if (aimFirstPersonActive) return; // fully in vanilla FP, no GL manipulation needed
+
+        float t = prevAimTransition + (aimTransition - prevAimTransition) * partialTicks;
+        t = applyEasing(t, Config.decoupledCameraAimTransitionEasing);
+        if (t < 0.001f) return;
+
+        float eyeH = entity.yOffset - 1.62f;
+
+        MODELVIEW_BUFFER.clear();
+        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, MODELVIEW_BUFFER);
+
+        float m4 = MODELVIEW_BUFFER.get(4), m5 = MODELVIEW_BUFFER.get(5), m6 = MODELVIEW_BUFFER.get(6);
+        float m12 = MODELVIEW_BUFFER.get(12), m13 = MODELVIEW_BUFFER.get(13), m14 = MODELVIEW_BUFFER.get(14);
+
+        // Eye position in view space: M * (0, eyeH, 0, 1)
+        float eyeViewX = m4 * eyeH + m12;
+        float eyeViewY = m5 * eyeH + m13;
+        float eyeViewZ = m6 * eyeH + m14;
+
+        // Translate view so camera moves toward eye by factor t
+        MODELVIEW_BUFFER.put(12, m12 - eyeViewX * t);
+        MODELVIEW_BUFFER.put(13, m13 - eyeViewY * t);
+        MODELVIEW_BUFFER.put(14, m14 - eyeViewZ * t);
+
+        MODELVIEW_BUFFER.position(0);
+        GL11.glLoadMatrix(MODELVIEW_BUFFER);
+    }
+
+    private static float applyEasing(float t, String easing) {
+        switch (easing) {
+            case "ease_in":
+                return t * t;
+            case "ease_out":
+                return 1f - (1f - t) * (1f - t);
+            case "ease_in_out":
+                return t < 0.5f ? 2f * t * t : 1f - 2f * (1f - t) * (1f - t);
+            case "smooth":
+                return t * t * (3f - 2f * t);
+            default:
+                return t;
+        }
     }
 
     /**
@@ -545,6 +653,14 @@ public final class DecoupledCameraHandler {
         turningLockTicks = 0;
         aiming = false;
         cameraPositionValid = false;
+        aimTransition = 0f;
+        prevAimTransition = 0f;
+        if (aimFirstPersonActive && savedThirdPersonView >= 0) {
+            Minecraft.getMinecraft().gameSettings.thirdPersonView = savedThirdPersonView;
+            ShoulderSurfingCompat.setShoulderSurfing(true);
+        }
+        aimFirstPersonActive = false;
+        savedThirdPersonView = -1;
     }
 
     /**

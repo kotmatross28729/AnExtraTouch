@@ -28,6 +28,16 @@ public class ShoulderSurfingCompat {
         return isAvailable() && ShoulderSurfingBridge.shouldRenderCrosshair();
     }
 
+    /**
+     * Programmatically sets SS's shoulder surfing state.
+     * Used to re-enable shoulder surfing after aim-to-first-person transition.
+     */
+    public static void setShoulderSurfing(boolean enabled) {
+        if (isAvailable()) {
+            ShoulderSurfingBridge.setShoulderSurfing(enabled);
+        }
+    }
+
     // Inner class only loaded by the JVM when first referenced,
     // which only happens after isAvailable() confirms SS is on the classpath.
     private static class ShoulderSurfingBridge {
@@ -45,6 +55,11 @@ public class ShoulderSurfingCompat {
                 .current();
             return com.teamderpy.shouldersurfing.config.Config.CLIENT.getCrosshairVisibility(perspective)
                 .doRender(net.minecraft.client.Minecraft.getMinecraft().objectMouseOver, instance.isAiming());
+        }
+
+        static void setShoulderSurfing(boolean enabled) {
+            com.teamderpy.shouldersurfing.client.ShoulderInstance.getInstance()
+                .setShoulderSurfing(enabled);
         }
     }
 }
