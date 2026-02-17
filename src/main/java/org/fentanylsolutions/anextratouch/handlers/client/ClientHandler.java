@@ -6,9 +6,11 @@ import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 
 import org.fentanylsolutions.anextratouch.AnExtraTouch;
+import org.fentanylsolutions.anextratouch.Config;
 import org.fentanylsolutions.anextratouch.compat.ShoulderSurfingCompat;
 import org.fentanylsolutions.anextratouch.handlers.client.camera.DecoupledCameraHandler;
 import org.lwjgl.opengl.GL11;
@@ -23,6 +25,9 @@ public class ClientHandler {
     // Saved entity rotation for RenderWorldLastEvent swap
     private float savedYaw, savedPitch, savedPrevYaw, savedPrevPitch;
     private boolean rotationSwapped;
+
+    // Player fade transparency state
+    private boolean playerFadeActive;
 
     @SubscribeEvent
     public void onClientDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
@@ -86,6 +91,43 @@ public class ClientHandler {
 
         OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
         GL11.glDisable(GL11.GL_BLEND);
+    }
+
+    /**
+     * Fade out the view entity as the camera gets close.
+     * Enables GL blending with computed alpha when within fade range.
+     */
+    @SubscribeEvent
+    public void onRenderLivingPre(RenderLivingEvent.Pre event) {
+        playerFadeActive = false;
+        if (!Config.cameraPlayerFadeEnabled) return;
+        Minecraft mc = Minecraft.getMinecraft();
+        if (event.entity != mc.renderViewEntity) return;
+        if (mc.gameSettings.thirdPersonView == 0 && !DecoupledCameraHandler.isActive()) return;
+
+        float alpha = DecoupledCameraHandler.getPlayerAlpha();
+        if (alpha <= 0f) {
+            event.setCanceled(true);
+            return;
+        }
+        if (alpha >= 1f) return;
+
+        playerFadeActive = true;
+        GL11.glPushAttrib(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_CURRENT_BIT);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glColor4f(1f, 1f, 1f, alpha);
+    }
+
+    /**
+     * Restore GL state after faded entity render.
+     */
+    @SubscribeEvent
+    public void onRenderLivingPost(RenderLivingEvent.Post event) {
+        if (!playerFadeActive) return;
+        if (event.entity != Minecraft.getMinecraft().renderViewEntity) return;
+        GL11.glPopAttrib();
+        playerFadeActive = false;
     }
 
     /**

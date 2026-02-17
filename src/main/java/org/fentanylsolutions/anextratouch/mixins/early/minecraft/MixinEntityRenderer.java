@@ -124,6 +124,8 @@ public abstract class MixinEntityRenderer {
         if (DecoupledCameraHandler.isActive() && mc.renderViewEntity != null) {
             DecoupledCameraHandler.applyAimTransition(partialTicks, mc.renderViewEntity);
         }
+        // Compute final camera-to-entity distance for player fade
+        anextratouch$updateFadeDistance();
         anextratouch$restoreRotation();
     }
 
@@ -297,6 +299,24 @@ public abstract class MixinEntityRenderer {
         anextratouch$matBuf.put(14, m14 - vz);
         anextratouch$matBuf.position(0);
         GL11.glLoadMatrix(anextratouch$matBuf);
+    }
+
+    /**
+     * Extracts the camera-to-entity distance from the final GL modelview matrix
+     * (after all camera manipulations) and stores it for player fade rendering.
+     */
+    @Unique
+    private void anextratouch$updateFadeDistance() {
+        if (mc.gameSettings.thirdPersonView == 0 && !DecoupledCameraHandler.isActive()) {
+            DecoupledCameraHandler.updateCameraEntityDistance(Float.MAX_VALUE);
+            return;
+        }
+        anextratouch$matBuf.clear();
+        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, anextratouch$matBuf);
+        float m12 = anextratouch$matBuf.get(12);
+        float m13 = anextratouch$matBuf.get(13);
+        float m14 = anextratouch$matBuf.get(14);
+        DecoupledCameraHandler.updateCameraEntityDistance((float) Math.sqrt(m12 * m12 + m13 * m13 + m14 * m14));
     }
 
     @Unique

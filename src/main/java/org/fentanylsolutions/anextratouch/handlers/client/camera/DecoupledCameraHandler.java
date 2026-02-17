@@ -79,6 +79,9 @@ public final class DecoupledCameraHandler {
     private static double cameraWorldX, cameraWorldY, cameraWorldZ;
     private static boolean cameraPositionValid;
 
+    // Camera-to-entity distance for player fade
+    private static float cameraEntityDistance = Float.MAX_VALUE;
+
     // Entity tracking for reset
     private static int lastEntityId = Integer.MIN_VALUE;
 
@@ -453,6 +456,28 @@ public final class DecoupledCameraHandler {
     }
 
     /**
+     * Called from MixinEntityRenderer after all GL camera manipulations to store
+     * the current camera-to-entity distance for player fade calculations.
+     */
+    public static void updateCameraEntityDistance(float distance) {
+        cameraEntityDistance = distance;
+    }
+
+    /**
+     * Returns the alpha value for rendering the view entity based on camera proximity.
+     * 1.0 = fully opaque, 0.0 = fully invisible.
+     */
+    public static float getPlayerAlpha() {
+        if (!Config.cameraPlayerFadeEnabled) return 1f;
+        float startDist = Config.cameraPlayerFadeStartDistance;
+        float endDist = Config.cameraPlayerFadeEndDistance;
+        if (startDist <= endDist) return 1f;
+        if (cameraEntityDistance >= startDist) return 1f;
+        if (cameraEntityDistance <= endDist) return 0f;
+        return (cameraEntityDistance - endDist) / (startDist - endDist);
+    }
+
+    /**
      * Applies the aim-to-first-person camera transition by modifying the GL modelview matrix.
      * Smoothly moves the camera from its third-person position toward the entity eye (GL origin).
      * Called from MixinEntityRenderer after orientCamera and camera overhaul.
@@ -678,6 +703,7 @@ public final class DecoupledCameraHandler {
         forwardTapTimer = backTapTimer = leftTapTimer = rightTapTimer = 0;
         wasForwardDown = wasBackDown = wasLeftDown = wasRightDown = false;
         cameraPositionValid = false;
+        cameraEntityDistance = Float.MAX_VALUE;
         aimTransition = 0f;
         prevAimTransition = 0f;
         if (aimFirstPersonActive && savedThirdPersonView >= 0) {

@@ -152,9 +152,12 @@ public class Config {
     public static float cameraRideVerticalPitch = 7.0f;
     public static float cameraRideHorizSmoothing = 1.0f;
     public static float cameraRideVertSmoothing = 1.0f;
-    // camera clipping and follow
+    // camera clipping, follow and player fade
     public static float cameraClippingSmoothing = 0.5f;
     public static float cameraFollowSmoothing = 0.8f;
+    public static boolean cameraPlayerFadeEnabled = true;
+    public static float cameraPlayerFadeStartDistance = 1.5f;
+    public static float cameraPlayerFadeEndDistance = 0.5f;
     // decoupled camera (shoulder surfing integration)
     public static boolean decoupledCameraEnabled = true;
     public static float decoupledCameraOffsetDecay = 0.5f;
@@ -868,6 +871,25 @@ public class Config {
                 0.0f,
                 1.0f,
                 "Smooth camera follow in third person. The camera trails behind the player's position instead of being rigidly attached. 0 = instant follow (vanilla), higher = more lag.");
+            cameraPlayerFadeEnabled = config.getBoolean(
+                "cameraPlayerFadeEnabled",
+                Categories.camera,
+                cameraPlayerFadeEnabled,
+                "Gradually fade out the player model as the third-person camera gets very close (e.g. clipping against walls).");
+            cameraPlayerFadeStartDistance = config.getFloat(
+                "cameraPlayerFadeStartDistance",
+                Categories.camera,
+                cameraPlayerFadeStartDistance,
+                0.0f,
+                10.0f,
+                "Camera-to-player distance at which the fade begins. At this distance the player is fully opaque.");
+            cameraPlayerFadeEndDistance = config.getFloat(
+                "cameraPlayerFadeEndDistance",
+                Categories.camera,
+                cameraPlayerFadeEndDistance,
+                0.0f,
+                10.0f,
+                "Camera-to-player distance at which the player is fully invisible.");
 
             // decoupled camera
             decoupledCameraEnabled = config.getBoolean(
