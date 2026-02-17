@@ -158,7 +158,9 @@ public class Config {
     public static float decoupledCameraPlayerTurnSpeed = 0.25f;
     public static int decoupledCameraTurningLockTicks = 10;
     public static String[] decoupledCameraAimingActions = { "bow" };
-    public static String[] decoupledCameraAimingItems = {};
+    public static String[] decoupledCameraAimingItems = { "minecraft:snowball", "minecraft:egg",
+        "minecraft:ender_pearl", "minecraft:ender_eye", "minecraft:experience_bottle", "minecraft:fishing_rod",
+        "minecraft:potion@16384-32767" };
 
     // sound shakes
     public static boolean cameraSoundShakesEnabled = true;
@@ -881,7 +883,7 @@ public class Config {
                 "decoupledCameraAimingItems",
                 Categories.camera,
                 decoupledCameraAimingItems,
-                "Additional item registry names that trigger aiming mode regardless of action type. Format: \"modid:itemname\", e.g. \"minecraft:bow\".");
+                "Items that couple the camera when held (for instant-throw projectiles like snowballs). Player body faces crosshair direction so projectiles fire accurately. Format: \"modid:itemname\" (any meta), \"modid:itemname@N\" (exact meta), \"modid:itemname@N-M\" (meta range). Splash potions use meta 16384-32767.");
 
             // sound shakes
             cameraSoundShakesEnabled = config.getBoolean(

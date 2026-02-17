@@ -448,33 +448,70 @@ public final class DecoupledCameraHandler {
     }
 
     /**
-     * Checks if the player is currently using an aiming item (bow, etc.).
-     * Matches by EnumAction name (configurable) or by item registry name override.
+     * Checks if the player is aiming. Two modes:
+     * 1. Currently using an item whose EnumAction matches the actions list (e.g. bow draw)
+     * 2. Holding an item whose registry name matches the items list (e.g. snowball, ender pearl)
+     * These couple while held so instant-throw projectiles fire at the crosshair.
      */
     private static boolean computeAiming(EntityPlayerSP player) {
-        if (!player.isUsingItem()) return false;
-        ItemStack itemInUse = player.getItemInUse();
-        if (itemInUse == null) return false;
-
-        // Check by EnumAction name
-        String actionName = itemInUse.getItemUseAction()
-            .name();
-        for (String action : Config.decoupledCameraAimingActions) {
-            if (actionName.equalsIgnoreCase(action)) {
-                return true;
-            }
-        }
-
-        // Check by item registry name override
-        String registryName = Item.itemRegistry.getNameForObject(itemInUse.getItem());
-        if (registryName != null) {
-            for (String item : Config.decoupledCameraAimingItems) {
-                if (registryName.equals(item)) {
-                    return true;
+        // Check sustained-use items by EnumAction (bow draw, etc.)
+        if (player.isUsingItem()) {
+            ItemStack itemInUse = player.getItemInUse();
+            if (itemInUse != null) {
+                String actionName = itemInUse.getItemUseAction()
+                    .name();
+                for (String action : Config.decoupledCameraAimingActions) {
+                    if (actionName.equalsIgnoreCase(action)) {
+                        return true;
+                    }
                 }
             }
         }
 
+        // Check held item by registry name (instant-throw items like snowball, egg, etc.)
+        ItemStack held = player.getHeldItem();
+        if (held != null) {
+            if (matchesItemSpec(held, Config.decoupledCameraAimingItems)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if an ItemStack matches any entry in the item spec list.
+     * Supports formats: "modid:name" (any meta), "modid:name@N" (exact meta),
+     * "modid:name@N-M" (meta range inclusive).
+     */
+    private static boolean matchesItemSpec(ItemStack stack, String[] specs) {
+        String registryName = Item.itemRegistry.getNameForObject(stack.getItem());
+        if (registryName == null) return false;
+        int meta = stack.getItemDamage();
+
+        for (String spec : specs) {
+            int atIdx = spec.indexOf('@');
+            if (atIdx < 0) {
+                // No meta spec - match any meta
+                if (registryName.equals(spec)) return true;
+            } else {
+                // Has meta spec - check registry name first
+                if (!registryName.equals(spec.substring(0, atIdx))) continue;
+                String metaSpec = spec.substring(atIdx + 1);
+                int dashIdx = metaSpec.indexOf('-');
+                try {
+                    if (dashIdx < 0) {
+                        // Exact meta: "modid:name@N"
+                        if (meta == Integer.parseInt(metaSpec)) return true;
+                    } else {
+                        // Range: "modid:name@N-M"
+                        int min = Integer.parseInt(metaSpec.substring(0, dashIdx));
+                        int max = Integer.parseInt(metaSpec.substring(dashIdx + 1));
+                        if (meta >= min && meta <= max) return true;
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+        }
         return false;
     }
 
