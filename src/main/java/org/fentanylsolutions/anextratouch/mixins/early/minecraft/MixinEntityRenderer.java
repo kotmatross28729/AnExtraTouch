@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.At.Shift;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -352,6 +353,31 @@ public abstract class MixinEntityRenderer {
         GL11.glRotatef(pitch + pitchOff, 1f, 0f, 0f);
         GL11.glRotatef(yaw + yawOff, 0f, 1f, 0f);
         GL11.glTranslatef(0f, eyeH, 0f);
+    }
+
+    /**
+     * Swap entity rotation to camera rotation around ActiveRenderInfo.updateRenderInfo so
+     * particle billboard orientation uses the camera direction instead of the player body direction.
+     * Without this, particles appear squished or culled when the camera faces a different direction
+     * than the player in decoupled third person.
+     */
+    @Inject(
+        method = "renderWorld",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/ActiveRenderInfo;updateRenderInfo(Lnet/minecraft/entity/player/EntityPlayer;Z)V"))
+    private void anextratouch$beforeUpdateRenderInfo(float partialTicks, long finishTimeNano, CallbackInfo ci) {
+        anextratouch$swapRotation();
+    }
+
+    @Inject(
+        method = "renderWorld",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/ActiveRenderInfo;updateRenderInfo(Lnet/minecraft/entity/player/EntityPlayer;Z)V",
+            shift = Shift.AFTER))
+    private void anextratouch$afterUpdateRenderInfo(float partialTicks, long finishTimeNano, CallbackInfo ci) {
+        anextratouch$restoreRotation();
     }
 
     /**
