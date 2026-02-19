@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(EntityRenderer.class)
 public abstract class MixinEntityRenderer {
@@ -351,6 +352,17 @@ public abstract class MixinEntityRenderer {
         GL11.glRotatef(pitch + pitchOff, 1f, 0f, 0f);
         GL11.glRotatef(yaw + yawOff, 0f, 1f, 0f);
         GL11.glTranslatef(0f, eyeH, 0f);
+    }
+
+    /**
+     * Override FOV when in third person with the configurable FOV value.
+     */
+    @Inject(method = "getFOVModifier", at = @At("RETURN"), cancellable = true)
+    private void anextratouch$modifyFov(float partialTicks, boolean isMainView, CallbackInfoReturnable<Float> cir) {
+        if (!isMainView) return;
+        if (!Config.cameraFovOverrideEnabled) return;
+        if (mc.gameSettings.thirdPersonView == 0) return;
+        cir.setReturnValue(Config.cameraFovOverride);
     }
 
     @Inject(method = "renderHand", at = @At("HEAD"))

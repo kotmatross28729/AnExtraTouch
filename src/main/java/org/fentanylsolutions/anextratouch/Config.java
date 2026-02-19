@@ -160,6 +160,8 @@ public class Config {
     public static float cameraPlayerFadeStartDistance = 1.5f;
     public static float cameraPlayerFadeEndDistance = 0.5f;
     public static boolean cameraSoundCentering = true;
+    public static boolean cameraFovOverrideEnabled = false;
+    public static float cameraFovOverride = 70.0f;
     // decoupled camera (shoulder surfing integration)
     public static boolean decoupledCameraEnabled = true;
     public static float decoupledCameraOffsetDecay = 0.5f;
@@ -904,6 +906,18 @@ public class Config {
                 Categories.camera,
                 cameraSoundCentering,
                 "Place the audio listener at the camera position instead of the player in third person. Makes positional audio match the camera perspective.");
+            cameraFovOverrideEnabled = config.getBoolean(
+                "cameraFovOverrideEnabled",
+                Categories.camera,
+                cameraFovOverrideEnabled,
+                "Override the camera FOV when in third person view.");
+            cameraFovOverride = config.getFloat(
+                "cameraFovOverride",
+                Categories.camera,
+                cameraFovOverride,
+                30.0f,
+                110.0f,
+                "Camera FOV when in third person view. Only applies when cameraFovOverrideEnabled is true.");
 
             // decoupled camera
             decoupledCameraEnabled = config.getBoolean(
