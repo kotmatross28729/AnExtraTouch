@@ -27,7 +27,11 @@ public class SmoothGuiHandler {
     }
 
     public static float getAlphaSince(long time) {
-        float fadeTime = Config.smoothGuiAnimationTime;
+        return getAlphaSince(time, Config.smoothGuiAnimationTime);
+    }
+
+    public static float getAlphaSince(long time, int durationMs) {
+        float fadeTime = Math.max(1, durationMs);
         float elapsed = Math.min((float) (System.currentTimeMillis() - time), fadeTime);
         return elapsed / fadeTime;
     }

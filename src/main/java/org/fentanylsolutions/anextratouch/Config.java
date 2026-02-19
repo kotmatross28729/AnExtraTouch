@@ -102,6 +102,7 @@ public class Config {
     public static int smoothGuiAnimationTime = 220;
     public static float smoothGuiAnimationScale = 1.0f;
     public static boolean smoothGuiFadeBackground = true;
+    public static int smoothGuiBackgroundFadeTime = 85;
     public static String smoothGuiAnimationStyle = "BACK";
     public static String smoothGuiAnimationDirection = "DOWN";
     public static String[] smoothGuiExcludedScreens = { "GuiChat", "GuiDownloadTerrain", "GuiMemoryErrorScreen",
@@ -158,6 +159,7 @@ public class Config {
     public static boolean cameraPlayerFadeEnabled = true;
     public static float cameraPlayerFadeStartDistance = 1.5f;
     public static float cameraPlayerFadeEndDistance = 0.5f;
+    public static boolean cameraSoundCentering = true;
     // decoupled camera (shoulder surfing integration)
     public static boolean decoupledCameraEnabled = true;
     public static float decoupledCameraOffsetDecay = 0.5f;
@@ -575,6 +577,13 @@ public class Config {
                 Categories.smoothGui,
                 smoothGuiFadeBackground,
                 "Fade in the dark background overlay when opening GUIs in-world.");
+            smoothGuiBackgroundFadeTime = config.getInt(
+                "smoothGuiBackgroundFadeTime",
+                Categories.smoothGui,
+                smoothGuiBackgroundFadeTime,
+                1,
+                10000,
+                "Background fade duration in milliseconds.");
             smoothGuiAnimationStyle = config.getString(
                 "smoothGuiAnimationStyle",
                 Categories.smoothGui,
@@ -890,6 +899,11 @@ public class Config {
                 0.0f,
                 10.0f,
                 "Camera-to-player distance at which the player is fully invisible.");
+            cameraSoundCentering = config.getBoolean(
+                "cameraSoundCentering",
+                Categories.camera,
+                cameraSoundCentering,
+                "Place the audio listener at the camera position instead of the player in third person. Makes positional audio match the camera perspective.");
 
             // decoupled camera
             decoupledCameraEnabled = config.getBoolean(

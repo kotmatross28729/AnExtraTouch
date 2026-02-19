@@ -126,6 +126,8 @@ public abstract class MixinEntityRenderer {
         }
         // Compute final camera-to-entity distance for player fade
         anextratouch$updateFadeDistance();
+        // Store camera world position + orientation for sound centering (before rotation restore)
+        DecoupledCameraHandler.updateSoundListener(partialTicks, mc.renderViewEntity);
         anextratouch$restoreRotation();
     }
 

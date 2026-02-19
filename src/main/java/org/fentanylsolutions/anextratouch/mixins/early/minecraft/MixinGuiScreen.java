@@ -42,7 +42,8 @@ public abstract class MixinGuiScreen extends Gui {
         }
 
         ci.cancel();
-        float fade = Math.min(SmoothGuiHandler.getAlphaSince(SmoothGuiHandler.getLastScreenOpenedTime()) * 2.6f, 1f);
+        float fade = SmoothGuiHandler
+            .getAlphaSince(SmoothGuiHandler.getLastScreenOpenedTime(), Config.smoothGuiBackgroundFadeTime);
         int top = anextratouch$applyFade(anextratouch$COLOR_TOP, fade);
         int bottom = anextratouch$applyFade(anextratouch$COLOR_BOTTOM, fade);
 

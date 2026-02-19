@@ -30,6 +30,7 @@ public class EarlyMixinLoader extends FentEarlyMixinLoader {
             .addMixin("MixinEntityLivingBase", MixinBuilder.Side.CLIENT)
             .addMixin("MixinEntitySetAngles", MixinBuilder.Side.CLIENT)
             .addMixin("MixinEntityPlayerSP", MixinBuilder.Side.CLIENT)
+            .addMixin("MixinSoundHandler", MixinBuilder.Side.CLIENT)
             .build();
     }
 }

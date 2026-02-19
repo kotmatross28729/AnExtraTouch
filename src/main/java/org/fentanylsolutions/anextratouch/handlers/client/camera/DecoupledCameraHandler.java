@@ -82,6 +82,11 @@ public final class DecoupledCameraHandler {
     // Camera-to-entity distance for player fade
     private static float cameraEntityDistance = Float.MAX_VALUE;
 
+    // Sound centering: camera world state stored during orientCamera for the next frame's setListener
+    private static float soundCamX, soundCamY, soundCamZ;
+    private static float soundCamYaw, soundCamPitch;
+    private static boolean soundListenerReady;
+
     // Entity tracking for reset
     private static int lastEntityId = Integer.MIN_VALUE;
 
@@ -475,6 +480,63 @@ public final class DecoupledCameraHandler {
         if (cameraEntityDistance >= startDist) return 1f;
         if (cameraEntityDistance <= endDist) return 0f;
         return (cameraEntityDistance - endDist) / (startDist - endDist);
+    }
+
+    /**
+     * Called from MixinEntityRenderer orientCamera RETURN (before rotation restore) to store
+     * the camera world position and orientation for sound centering on the next frame.
+     * Runs for ANY third person view, not just when the decoupled camera is active.
+     * The entity's rotation at this point equals the camera direction (due to HEAD swap in
+     * decoupled mode, or naturally in vanilla third person).
+     */
+    public static void updateSoundListener(float partialTicks, EntityLivingBase entity) {
+        soundListenerReady = false;
+        if (entity == null) return;
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc.gameSettings.thirdPersonView == 0 && !aimFirstPersonActive && aimTransition <= 0f) return;
+
+        MODELVIEW_BUFFER.clear();
+        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, MODELVIEW_BUFFER);
+
+        float m0 = MODELVIEW_BUFFER.get(0), m1 = MODELVIEW_BUFFER.get(1), m2 = MODELVIEW_BUFFER.get(2);
+        float m4 = MODELVIEW_BUFFER.get(4), m5 = MODELVIEW_BUFFER.get(5), m6 = MODELVIEW_BUFFER.get(6);
+        float m8 = MODELVIEW_BUFFER.get(8), m9 = MODELVIEW_BUFFER.get(9), m10 = MODELVIEW_BUFFER.get(10);
+        float m12 = MODELVIEW_BUFFER.get(12), m13 = MODELVIEW_BUFFER.get(13), m14 = MODELVIEW_BUFFER.get(14);
+
+        double relX = -(m0 * m12 + m1 * m13 + m2 * m14);
+        double relY = -(m4 * m12 + m5 * m13 + m6 * m14);
+        double relZ = -(m8 * m12 + m9 * m13 + m10 * m14);
+
+        soundCamX = (float) (relX + entity.prevPosX + (entity.posX - entity.prevPosX) * partialTicks);
+        soundCamY = (float) (relY + entity.prevPosY + (entity.posY - entity.prevPosY) * partialTicks);
+        soundCamZ = (float) (relZ + entity.prevPosZ + (entity.posZ - entity.prevPosZ) * partialTicks);
+        soundCamYaw = entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * partialTicks;
+        soundCamPitch = entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * partialTicks;
+        soundListenerReady = true;
+    }
+
+    public static boolean isSoundListenerReady() {
+        return soundListenerReady;
+    }
+
+    public static float getSoundCamX() {
+        return soundCamX;
+    }
+
+    public static float getSoundCamY() {
+        return soundCamY;
+    }
+
+    public static float getSoundCamZ() {
+        return soundCamZ;
+    }
+
+    public static float getSoundCamYaw() {
+        return soundCamYaw;
+    }
+
+    public static float getSoundCamPitch() {
+        return soundCamPitch;
     }
 
     /**
