@@ -21,11 +21,17 @@ Various small visual, audio, and gameplay tweaks, aimed to enhance the game expe
 * Cold breath particles. Backported from modern Dynamic Surroundings.
 * Water splash sound effects when walking in rain. Backported from modern Dynamic Surroundings.
 * Wet entities shed water particles. Backported from Legendary Survival Overhaul.
-* Grass trampling. Entities can trample grass when repeatedly walking over it. Entirely serve-side, off by default, players only by default.
+* Grass trampling. Entities can trample grass when repeatedly walking over it. Entirely server-side, off by default, players only by default.
 * Thermal Foundation Blizz snow trail, similar to the Snow Golem.
 * Smooth Gui backport.
 * Minecraft-CameraOverhaul backport.
 * Config system to add camera shakes to sounds.
+* Some features backported from modern Shoulder Surfing (meant to be used along the `1.7.10` Shoulder Surfing, but should also work on their own):
+  * Decoupled camera
+  * Switch to first person when certain items are held, or some actions made (like bow shooting), configurable
+  * Player model fading if the camera gets too close
+  * Omnidirectional sprinting
+* Camera follow lag in Shoulder Surfing mode
 
 The entire mod is heavily configurable.
 
