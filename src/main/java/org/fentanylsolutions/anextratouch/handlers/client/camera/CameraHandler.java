@@ -66,9 +66,17 @@ public final class CameraHandler {
         if (Config.cameraDisableWhilePaused && Minecraft.getMinecraft()
             .isGamePaused()) {
             lastNanoTime = 0L;
-            pitchOffset = 0.0f;
-            yawOffset = 0.0f;
-            rollOffset = 0.0f;
+            // Keep current offsets instead of zeroing to avoid a visible camera snap.
+            // Update prev state so unpausing doesn't produce a stale yaw delta.
+            double currentYaw = entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * partialTicks;
+            double currentPitch = entity.prevRotationPitch
+                + (entity.rotationPitch - entity.prevRotationPitch) * partialTicks;
+            prevCameraEulerRot.set(currentPitch, currentYaw, 0);
+            EntityLivingBase velocitySource = entity;
+            if (entity.ridingEntity instanceof EntityLivingBase) {
+                velocitySource = (EntityLivingBase) entity.ridingEntity;
+            }
+            prevEntityVelocity.set(velocitySource.motionX, velocitySource.motionY, velocitySource.motionZ);
             return;
         }
 
