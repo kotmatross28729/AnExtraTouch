@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.MathHelper;
@@ -166,12 +165,12 @@ public class FootprintManager {
         double camY = viewer.lastTickPosY + (viewer.posY - viewer.lastTickPosY) * (double) event.partialTicks;
         double camZ = viewer.lastTickPosZ + (viewer.posZ - viewer.lastTickPosZ) * (double) event.partialTicks;
 
-        OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
-        int previousTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
         mc.getTextureManager()
             .bindTexture(FOOTPRINT_TEXLOC);
 
-        GL11.glPushClientAttrib(GL11.GL_CLIENT_VERTEX_ARRAY_BIT);
+        GL11.glEnable(GL11.GL_POLYGON_OFFSET_FILL);
+        GL11.glPolygonOffset(-5F, -5F);
+
         GL11.glPushAttrib(
             GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT
                 | GL11.GL_DEPTH_BUFFER_BIT
@@ -218,10 +217,8 @@ public class FootprintManager {
             tess.draw();
         } finally {
             GL11.glPopAttrib();
-            GL11.glPopClientAttrib();
-            OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousTexture);
-            OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
+            GL11.glPolygonOffset(0.0f, 0.0f);
+            GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);
         }
     }
 }

@@ -189,6 +189,7 @@ public class Config {
 
     // misc
     public static boolean blizzSnowTrailEnabled = true;
+    public static boolean loadingProgressBarEnabled = true;
 
     // debug
     public static boolean debugMode = false;
@@ -1006,6 +1007,12 @@ public class Config {
                 Categories.misc,
                 blizzSnowTrailEnabled,
                 "Allow Thermal Foundation Blizz mobs to leave a snow trail like vanilla snow golems.");
+
+            loadingProgressBarEnabled = config.getBoolean(
+                "loadingProgressBarEnabled",
+                Categories.misc,
+                loadingProgressBarEnabled,
+                "Bring back progress bar to the world loading screen.");
 
             // Debug
             debugMode = config.getBoolean("debugMode", Categories.debug, debugMode, "Enable debug logging");
