@@ -31,6 +31,8 @@ public class EarlyMixinLoader extends FentEarlyMixinLoader {
             .addMixin("MixinEntitySetAngles", MixinBuilder.Side.CLIENT)
             .addMixin("MixinEntityPlayerSP", MixinBuilder.Side.CLIENT)
             .addMixin("MixinSoundHandler", MixinBuilder.Side.CLIENT)
+            .addMixin("MixinLoadingScreenRenderer", MixinBuilder.Side.CLIENT)
+            .addMixin("MixinMinecraftServer", MixinBuilder.Side.CLIENT)
             .build();
     }
 }

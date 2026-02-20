@@ -31,6 +31,9 @@ public class VarInstanceClient {
     // Smooth GUI
     public HashSet<String> smoothGuiExcludedScreens;
 
+    // Loading Progress Bar
+    public int chunkLoadingProgress = -1;
+
     public boolean serverHasAET = false;
 
     public VarInstanceClient() {}
