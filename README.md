@@ -32,6 +32,7 @@ Various small visual, audio, and gameplay tweaks, aimed to enhance the game expe
   * Player model fading if the camera gets too close
   * Omnidirectional sprinting
 * Camera follow lag in Shoulder Surfing mode
+* Mixin-based Loading Progress Bar (green world load bar) port thanks to @kotmatross28729
 
 The entire mod is heavily configurable.
 
@@ -66,6 +67,7 @@ This mod can be installed on client, server, or both. Armor walking sounds are m
 * [Smooth Gui code is licensed under CC0-1.0](https://github.com/Ezzenix/SmoothGui/blob/main/LICENSE).
 * [Minecraft-CameraOverhaul code is licensed under GPL-3.0](https://github.com/Mirsario/Minecraft-CameraOverhaul/blob/dev/LICENSE.md)
 * [Shoulder Surfing code is licensed under MIT](https://github.com/Exopandora/ShoulderSurfing/blob/master/LICENSE)
+* [Loading Progress Bar](https://github.com/jbredwards/Loading-Progress-Bar/blob/1.7.10/LICENSE)
 
 ## Buy me some creatine
 

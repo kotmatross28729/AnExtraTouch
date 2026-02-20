@@ -5,12 +5,12 @@ import java.util.Iterator;
 import java.util.List;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-import net.minecraftforge.client.event.RenderWorldLastEvent;
 
 import org.fentanylsolutions.anextratouch.AnExtraTouch;
 import org.fentanylsolutions.anextratouch.Config;
@@ -149,8 +149,7 @@ public class FootprintManager {
         }
     }
 
-    @SubscribeEvent
-    public void onRenderWorldLast(RenderWorldLastEvent event) {
+    public void renderInWorldPass(float partialTicks) {
         if (!Config.footprintsEnabled || footprints.isEmpty()) {
             return;
         }
@@ -161,10 +160,12 @@ public class FootprintManager {
             return;
         }
 
-        double camX = viewer.lastTickPosX + (viewer.posX - viewer.lastTickPosX) * (double) event.partialTicks;
-        double camY = viewer.lastTickPosY + (viewer.posY - viewer.lastTickPosY) * (double) event.partialTicks;
-        double camZ = viewer.lastTickPosZ + (viewer.posZ - viewer.lastTickPosZ) * (double) event.partialTicks;
+        double camX = viewer.lastTickPosX + (viewer.posX - viewer.lastTickPosX) * (double) partialTicks;
+        double camY = viewer.lastTickPosY + (viewer.posY - viewer.lastTickPosY) * (double) partialTicks;
+        double camZ = viewer.lastTickPosZ + (viewer.posZ - viewer.lastTickPosZ) * (double) partialTicks;
 
+        OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
+        int previousTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
         mc.getTextureManager()
             .bindTexture(FOOTPRINT_TEXLOC);
 
@@ -179,7 +180,7 @@ public class FootprintManager {
         try {
             GL11.glEnable(GL11.GL_BLEND);
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            GL11.glDepthMask(false);
+            // GL11.glDepthMask(false);
             GL11.glDisable(GL11.GL_LIGHTING);
 
             Tessellator tess = Tessellator.instance;
@@ -190,7 +191,7 @@ public class FootprintManager {
                     continue;
                 }
 
-                float ageFraction = (fp.age + event.partialTicks) / (float) fp.maxAge;
+                float ageFraction = (fp.age + partialTicks) / (float) fp.maxAge;
                 float alpha = Math.max(0, 1.0f - ageFraction * ageFraction) * fp.opacity;
                 if (alpha <= 0.0f) {
                     continue;
@@ -217,6 +218,8 @@ public class FootprintManager {
             tess.draw();
         } finally {
             GL11.glPopAttrib();
+            OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousTexture);
             GL11.glPolygonOffset(0.0f, 0.0f);
             GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);
         }

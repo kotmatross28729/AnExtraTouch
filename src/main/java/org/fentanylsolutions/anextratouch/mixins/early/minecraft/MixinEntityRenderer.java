@@ -7,6 +7,7 @@ import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.entity.EntityLivingBase;
 
 import org.fentanylsolutions.anextratouch.Config;
+import org.fentanylsolutions.anextratouch.footsteps.FootprintManager;
 import org.fentanylsolutions.anextratouch.handlers.client.camera.CameraHandler;
 import org.fentanylsolutions.anextratouch.handlers.client.camera.DecoupledCameraHandler;
 import org.lwjgl.BufferUtils;
@@ -378,6 +379,24 @@ public abstract class MixinEntityRenderer {
             shift = Shift.AFTER))
     private void anextratouch$afterUpdateRenderInfo(float partialTicks, long finishTimeNano, CallbackInfo ci) {
         anextratouch$restoreRotation();
+    }
+
+    /**
+     * Render footprints in the main world translucent phase (before water),
+     * so water properly overlays submerged footprints.
+     *
+     * Using INVOKE_STRING on "water" keeps this decoupled from branch-specific
+     * sortAndRender call ordinals while still running at the correct phase.
+     */
+    @Inject(
+        method = "renderWorld",
+        at = @At(
+            value = "INVOKE_STRING",
+            target = "Lnet/minecraft/profiler/Profiler;endStartSection(Ljava/lang/String;)V",
+            args = "ldc=water",
+            shift = Shift.AFTER))
+    private void anextratouch$renderFootprintsBeforeWater(float partialTicks, long finishTimeNano, CallbackInfo ci) {
+        FootprintManager.INSTANCE.renderInWorldPass(partialTicks);
     }
 
     /**
