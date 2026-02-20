@@ -1,11 +1,11 @@
 package org.fentanylsolutions.anextratouch.compat;
 
-import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.player.EntityPlayer;
 
-import JinRyuu.JRMCore.i.ExtendedPlayer;
 import JinRyuu.JRMCore.JRMCoreKeyHandler;
+import JinRyuu.JRMCore.i.ExtendedPlayer;
 import JinRyuu.JRMCore.p.DBC.DBCPacketHandlerClient;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.relauncher.Side;
@@ -94,7 +94,8 @@ public class DbcAimingCompat {
         private static boolean isUsePressed() {
             try {
                 Minecraft mc = Minecraft.getMinecraft();
-                return mc != null && mc.gameSettings != null && mc.gameSettings.keyBindUseItem != null
+                return mc != null && mc.gameSettings != null
+                    && mc.gameSettings.keyBindUseItem != null
                     && mc.gameSettings.keyBindUseItem.getIsKeyPressed();
             } catch (Throwable ignored) {
                 return false;
