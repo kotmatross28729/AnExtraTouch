@@ -116,6 +116,8 @@ public abstract class MixinEntityRenderer {
         anextratouch$smoothCameraClipping(partialTicks);
         // Smooth camera follow (positional lag behind entity)
         anextratouch$smoothCameraFollow(mc.renderViewEntity, partialTicks);
+        // Vertical camera offset (compensates for mods like DBC/JBRA that alter yOffset during rendering)
+        anextratouch$applyCameraVerticalOffset();
         // Extract camera world position from GL matrix before overhaul modifies rotation.
         // This accounts for ShoulderSurfing's shoulder offset so aim raytraces originate
         // from the actual camera position, not the player's eye.
@@ -302,6 +304,29 @@ public abstract class MixinEntityRenderer {
         anextratouch$matBuf.put(12, m12 - vx);
         anextratouch$matBuf.put(13, m13 - vy);
         anextratouch$matBuf.put(14, m14 - vz);
+        anextratouch$matBuf.position(0);
+        GL11.glLoadMatrix(anextratouch$matBuf);
+    }
+
+    /**
+     * Applies a configurable vertical offset to the camera in world-space Y.
+     * Compensates for mods like DBC/JBRA that alter entity yOffset during
+     * the render cycle, which lowers the camera and causes ground clipping.
+     */
+    @Unique
+    private void anextratouch$applyCameraVerticalOffset() {
+        float offset = Config.cameraVerticalOffset;
+        if (offset == 0f || mc.gameSettings.thirdPersonView == 0) {
+            return;
+        }
+        anextratouch$matBuf.clear();
+        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, anextratouch$matBuf);
+        // Column 1 of the modelview (m4, m5, m6) is the world-Y axis in view space.
+        // Translating the camera up in world-Y means shifting the world down in view space.
+        float m4 = anextratouch$matBuf.get(4), m5 = anextratouch$matBuf.get(5), m6 = anextratouch$matBuf.get(6);
+        anextratouch$matBuf.put(12, anextratouch$matBuf.get(12) - m4 * offset);
+        anextratouch$matBuf.put(13, anextratouch$matBuf.get(13) - m5 * offset);
+        anextratouch$matBuf.put(14, anextratouch$matBuf.get(14) - m6 * offset);
         anextratouch$matBuf.position(0);
         GL11.glLoadMatrix(anextratouch$matBuf);
     }

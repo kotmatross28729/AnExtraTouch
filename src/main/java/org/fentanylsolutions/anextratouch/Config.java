@@ -162,6 +162,7 @@ public class Config {
     public static float cameraPlayerFadeStartDistance = 1.5f;
     public static float cameraPlayerFadeEndDistance = 0.5f;
     public static boolean cameraSoundCentering = true;
+    public static float cameraVerticalOffset = 0.0f;
     public static boolean cameraFovOverrideEnabled = false;
     public static float cameraFovOverride = 70.0f;
     // decoupled camera (shoulder surfing integration)
@@ -920,6 +921,13 @@ public class Config {
                 Categories.camera,
                 cameraSoundCentering,
                 "Place the audio listener at the camera position instead of the player in third person. Makes positional audio match the camera perspective.");
+            cameraVerticalOffset = config.getFloat(
+                "cameraVerticalOffset",
+                Categories.camera,
+                cameraVerticalOffset,
+                -1.0f,
+                1.0f,
+                "Vertical offset applied to the third-person camera in blocks. Positive values raise the camera, negative lower it. Useful to compensate for mods that alter entity eye height during rendering (e.g. DBC/JBRA).");
             cameraFovOverrideEnabled = config.getBoolean(
                 "cameraFovOverrideEnabled",
                 Categories.camera,
